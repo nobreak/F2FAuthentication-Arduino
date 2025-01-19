@@ -37,6 +37,7 @@ char simPIN[]   = "1526"; // SIM card PIN code, if any
 **/
 unsigned long gSignalStrengthPrevMillis = 0;
 const long gSignalStrengthInterval = 5000; // Intervall von 5 Sekunden
+SignalStrength gLastSignalStrength = SignalStrength::zero;
 
 
 void ladln(const String &text, bool toDisplay = true) {
@@ -160,7 +161,7 @@ void setup() {
   ladln("Connecting network ...");
   if (waitForNetwork(60000)) { // Warte bis zu 60 Sekunden
     ladln("Network connected.");
-    getSignalStrength();
+    updateSignalStrengthIfNeeded();
   } else {
     ladln("Network not connectable.");
   }
@@ -221,6 +222,15 @@ void forwardFromUart()
   }
 }
 
+void updateSignalStrengthIfNeeded(){
+  SignalStrength sgnStrngth = getSignalStrength();
+
+  if (sgnStrngth != gLastSignalStrength) {
+    Serial.print(F("New Signal Strength")); Serial.println(sgnStrngth);
+    updateIconSignalStrength(sgnStrngth);
+    gLastSignalStrength = sgnStrngth;
+  }
+}
 
 long prevMillis = 0;
 int interval = 1000;
@@ -236,9 +246,7 @@ void loop() {
   // reglular check for signal strength
   if (currentMillis - gSignalStrengthPrevMillis >= gSignalStrengthInterval) {
     gSignalStrengthPrevMillis = currentMillis;
-    SignalStrength sgnStrngth = getSignalStrength();
-    Serial.print(sgnStrngth); Serial.println(F(" Signal Strength"));
-    updateIconSignalStrength(sgnStrngth);
+    updateSignalStrengthIfNeeded();
   }
     
     
