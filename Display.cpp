@@ -33,5 +33,17 @@ void updateIconSignalStrength(SignalStrength strength) {
     clearRectOnDisplay(120, 0, 128, 8);
     gDisplay.drawBitmap(120,0, resultIcon, 8,8, WHITE);
     gDisplay.display();
-    
+}
+
+// is avainting a charbuffer with this formated text inside: 25/01/20,02:19:12+04
+void updateTextWithCurrentTime(char* buffer){
+    int startIndex = 10;
+    int length = 5; // count if visible digits
+
+    clearRectOnDisplay(0,8,128,32);
+    gDisplay.setCursor(36,12); 
+    gDisplay.setTextSize(2);
+    gDisplay.write(buffer + startIndex, length);
+    gDisplay.display();
+    gDisplay.setTextSize(1);
 }

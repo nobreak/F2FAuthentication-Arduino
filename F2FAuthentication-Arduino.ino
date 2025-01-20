@@ -213,6 +213,23 @@ void updateSignalStrengthIfNeeded(){
   }
 }
 
+void updateCurrentTime(){
+    char timeBuffer[23];
+    sim800l.getTime(timeBuffer, 23);  // getting the time via FONA from GSM modem
+    Serial.print(F("Time = ")); Serial.println(timeBuffer);
+
+    // if modem is not fully initalized, we're getting not valid date starting at 04/01/01, we ignore this
+    const char* searchString = "04/01/01";
+    char* result = strstr(timeBuffer, searchString);
+
+    if (result != NULL) {
+          Serial.print(F("Time = ")); Serial.print(timeBuffer);  Serial.print(F("++++NOT VALID"));
+      return;
+    }
+
+    updateTextWithCurrentTime(timeBuffer);
+}
+
 long prevMillis = 0;
 int interval = 1000;
 char sim800lNotificationBuffer[64];          //for notifications from the FONA
@@ -223,39 +240,21 @@ String smsString = "";
 
 
 /**
-*
+* Main Loop
 **/
 void loop() {
+    unsigned long currentMillis = millis();
 
-  
-  unsigned long currentMillis = millis();
-
-  // reglular check for signal strength
+  // get the signal strength and update the diplay if it has changed
   if (currentMillis - gSignalStrengthPrevMillis >= gSignalStrengthInterval) {
     gSignalStrengthPrevMillis = currentMillis;
     updateSignalStrengthIfNeeded();
   }
     
-  // check for time
+  // get the time and update the display
   if (currentMillis - gTimePrevMillis >= gTimeInterval) {
     gTimePrevMillis = currentMillis;
-
-    char timeBuffer[23];
-    sim800l.getTime(timeBuffer, 23);  // Holt die aktuelle Zeit vom FONA-Modul
-    Serial.print(F("Time = ")); Serial.println(timeBuffer);
-
-    int startIndex = 10;
-    int length = 5; // Anzahl der zu druckenden Zeichen
-
-    Serial.write(timeBuffer + startIndex, length);
-    Serial.println(); // Neue Zeile am Ende
-
-    clearRectOnDisplay(0,8,128,32);
-    gDisplay.setCursor(36,12); 
-    gDisplay.setTextSize(2);
-    gDisplay.write(timeBuffer + startIndex, length);
-    gDisplay.display();
-    gDisplay.setTextSize(1);
+    updateCurrentTime();
   }
     
   
