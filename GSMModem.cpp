@@ -56,7 +56,7 @@ bool waitForGSMModem(unsigned long timeout = 10000) {
 bool waitForNetwork(unsigned long timeout) {
   unsigned long start = millis();
   while (millis() - start < timeout) {
-    if (isNetworkConnected) {
+    if (isNetworkConnected() == true) {
       Serial.println("Mit Netzwerk verbunden!");
       return true;
     }
