@@ -35,8 +35,12 @@ char simPIN[]   = "1526"; // SIM card PIN code, if any
 * Loop timer
 **/
 unsigned long gSignalStrengthPrevMillis = 0;
-const long gSignalStrengthInterval = 5000; // Intervall von 5 Sekunden
+const long gSignalStrengthInterval = 10000; 
 SignalStrength gLastSignalStrength = SignalStrength::zero;
+
+unsigned long gTimePrevMillis = 0;
+const long gTimeInterval = 5000; // Interval 5 seconds
+
 
 
 void ladln(const String &text, bool toDisplay = true) {
@@ -119,9 +123,8 @@ void setup() {
   }
 
   // Display
-  if (!gDisplay.begin(SSD1306_SWITCHCAPVCC, 0x3C)) { // Adresse prüfen
-    Serial.println(F("Display konnte nicht initialisiert werden"));
-    for (;;);
+  if (!gDisplay.begin(SSD1306_SWITCHCAPVCC, 0x3C)) { // check the adresse with your device
+    Serial.println(F("Error: Display is not initalized"));
   }
 
   gDisplay.clearDisplay();
@@ -154,19 +157,22 @@ void setup() {
     ladln("GSM modem can not activated!");
   }
   
-  if (!sim800l.begin(*gGSMModemBus)) {
+  if (!sim800l.begin(*gGSMModemBus)) { // Adafruit_FONA is tarting now some standard routines on the GSM modem
     ladln(F("Couldn't find GSM SIM800L"));
     while (1); // stay here
   }
 
   ladln("Connecting network ...");
-  if (waitForNetwork(60000)) { // Warte bis zu 60 Sekunden
+  if (waitForNetwork(60000)) { // wait upto 60 seconds
     ladln("Network connected.");
     updateSignalStrengthIfNeeded();
   } else {
     ladln("Network not connectable.");
   }
 
+  if (!sim800l.enableNetworkTimeSync(true)) {
+    Serial.println(F("Failed to enable Network Time"));
+  }
 
 
   // Set up the FONA to send a +CMTI notification
@@ -230,6 +236,27 @@ void loop() {
     updateSignalStrengthIfNeeded();
   }
     
+  // check for time
+  if (currentMillis - gTimePrevMillis >= gTimeInterval) {
+    gTimePrevMillis = currentMillis;
+
+    char timeBuffer[23];
+    sim800l.getTime(timeBuffer, 23);  // Holt die aktuelle Zeit vom FONA-Modul
+    Serial.print(F("Time = ")); Serial.println(timeBuffer);
+
+    int startIndex = 10;
+    int length = 5; // Anzahl der zu druckenden Zeichen
+
+    Serial.write(timeBuffer + startIndex, length);
+    Serial.println(); // Neue Zeile am Ende
+
+    clearRectOnDisplay(0,8,128,32);
+    gDisplay.setCursor(36,12); 
+    gDisplay.setTextSize(2);
+    gDisplay.write(timeBuffer + startIndex, length);
+    gDisplay.display();
+    gDisplay.setTextSize(1);
+  }
     
   
 
