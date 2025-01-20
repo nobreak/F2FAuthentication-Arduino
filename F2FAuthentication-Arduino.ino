@@ -54,7 +54,13 @@ const long gTimeInterval = 5000; // Interval 5 seconds
 unsigned long gSMSPollPrevMillis = 0;
 const long gSMSPollInterval = 10000; // Interval 5 seconds
 
-
+/**
+* Some runtime status information
+**/
+bool gGSMModemConnected = false;
+bool gGSMNetworkConnected = false;
+bool gGSMNetworkTimeEnabled = false;
+bool gWifiConnected = false;
 
 
 void ladln(const String &text, bool toDisplay = true) {
@@ -199,18 +205,20 @@ void setup() {
   ladln("Wait for GSM modem...", false);
   unsigned long timeout = 10000;
   if (waitForGSMModem(timeout)) {
+    gGSMModemConnected = true;
     ladln("GSM modem is ready");
   } else {
     ladln("GSM modem can not activated!");
   }
   
-  if (!sim800l.begin(*gGSMModemBus)) { // Adafruit_FONA is tarting now some standard routines on the GSM modem
+  if (!sim800l.begin(*gGSMModemBus)) { // Adafruit_FONA is starting now some standard routines on the GSM modem
     ladln(F("Couldn't find GSM SIM800L"));
     while (1); // stay here
   }
 
   ladln("Connecting GSM network ...");
-  if (waitForNetwork(60000)) { // wait upto 60 seconds
+  if (waitForNetwork(30000)) { // wait upto 60 seconds
+    gGSMNetworkTimeEnabled = true;
     ladln("GSM Network connected.");
     updateSignalStrengthIfNeeded();
   } else {
@@ -225,6 +233,8 @@ void setup() {
 
   if (!sim800l.enableNetworkTimeSync(true)) {
     Serial.println(F("Failed to enable Network Time"));
+  } else {
+    gGSMNetworkTimeEnabled = true;
   }
 
   // connecting Wifi
@@ -233,6 +243,7 @@ void setup() {
     delay(1000);
     ladln("Verbinde mit WLAN...");
   }
+  gWifiConnected = true;
   ladln("Verbunden mit WLAN");
 
 
@@ -361,15 +372,13 @@ void loop() {
     unsigned long currentMillis = millis();
 
   // get the signal strength and update the diplay if it has changed
-  if (currentMillis - gSignalStrengthPrevMillis >= gSignalStrengthInterval) {
+  if (gGSMNetworkConnected == true && currentMillis - gSignalStrengthPrevMillis >= gSignalStrengthInterval) {
     gSignalStrengthPrevMillis = currentMillis;
     updateSignalStrengthIfNeeded();
-
-    //sendSlackMessage("Message from F2FA phone managed with secrets");
   }
     
   // get the time and update the display
-  if (currentMillis - gTimePrevMillis >= gTimeInterval) {
+  if (gGSMNetworkTimeEnabled == true && (currentMillis - gTimePrevMillis >= gTimeInterval)) {
     gTimePrevMillis = currentMillis;
     updateCurrentTime();
   }
@@ -377,7 +386,7 @@ void loop() {
   // get the count of received SMS and forward them
   // after it we delete the SMS
 
-  if (currentMillis - gSMSPollPrevMillis >= gSMSPollInterval) {
+  if (gGSMNetworkConnected == true && currentMillis - gSMSPollPrevMillis >= gSMSPollInterval) {
     gSMSPollPrevMillis = currentMillis;
     forwardAndDeleteSMSIfNeeded();
   }
