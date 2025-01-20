@@ -243,7 +243,9 @@ void setup() {
     delay(1000);
     ladln("Verbinde mit WLAN...");
   }
+  
   gWifiConnected = true;
+  updateIconWifi(gWifiConnected);
   ladln("Verbunden mit WLAN");
 
 
