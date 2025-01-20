@@ -2,6 +2,13 @@
 #include "globals.h"
 #include "GSMModem.h"
 #include "Display.h"
+#include "environment_secrets.h"
+
+#include <WiFi.h>
+#include <HTTPClient.h>
+
+const char* ssid = WIFI_SSID;
+const char* password = WIFI_PASSWORD;
 
 
 
@@ -22,7 +29,7 @@ Adafruit_SSD1306 gDisplay(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, -1);
 /**
 * Constants maybe necessary
 **/
-char simPIN[]   = "1526"; // SIM card PIN code, if any
+char simPIN[]   = SIM_PIN; // SIM card PIN code, if any
 
 /**
 * SPecial Runtime feature toggles
@@ -88,6 +95,34 @@ void lad(int number, bool toDisplay = true) {
   }
 }
 
+
+void sendSlackMessage(String message) {
+  if (WiFi.status() == WL_CONNECTED) {
+    HTTPClient http;
+    
+    // Slack Webhook URL
+    http.begin(SLACK_WEBHOOK_URL);
+    http.addHeader("Content-Type", "application/json");
+    
+    // JSON-Payload erstellen
+    String payload = "{\"text\":\"" + message + "\"}";
+    
+    // POST-Anfrage senden
+    int httpResponseCode = http.POST(payload);
+    
+    if (httpResponseCode > 0) {
+      String response = http.getString();
+      Serial.println("HTTP Antwort-Code: " + String(httpResponseCode));
+      Serial.println("Antwort: " + response);
+    } else {
+      Serial.println("Fehler beim HTTP POST: " + String(httpResponseCode));
+    }
+    
+    http.end();
+  } else {
+    Serial.println("WiFi nicht verbunden");
+  }
+}
 
 
 
@@ -163,17 +198,26 @@ void setup() {
     while (1); // stay here
   }
 
-  ladln("Connecting network ...");
+  ladln("Connecting GSM network ...");
   if (waitForNetwork(60000)) { // wait upto 60 seconds
-    ladln("Network connected.");
+    ladln("GSM Network connected.");
     updateSignalStrengthIfNeeded();
   } else {
-    ladln("Network not connectable.");
+    ladln("GSM Network not available.");
   }
 
   if (!sim800l.enableNetworkTimeSync(true)) {
     Serial.println(F("Failed to enable Network Time"));
   }
+
+  // connecting Wifi
+  WiFi.begin(ssid, password);
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(1000);
+    ladln("Verbinde mit WLAN...");
+  }
+  ladln("Verbunden mit WLAN");
+
 
    // count SMS in sim card
     int8_t smsnum = sim800l.getNumSMS();
@@ -293,6 +337,8 @@ void loop() {
   if (currentMillis - gSignalStrengthPrevMillis >= gSignalStrengthInterval) {
     gSignalStrengthPrevMillis = currentMillis;
     updateSignalStrengthIfNeeded();
+
+    //sendSlackMessage("Message from F2FA phone managed with secrets");
   }
     
   // get the time and update the display
@@ -300,8 +346,8 @@ void loop() {
     gTimePrevMillis = currentMillis;
     updateCurrentTime();
   }
-    
-  
+
+
 
 
 
