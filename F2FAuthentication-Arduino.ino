@@ -49,7 +49,11 @@ unsigned long gTimePrevMillis = 0;
 const long gTimeInterval = 5000; // Interval 5 seconds
 
 
-char replybuffer[255];
+unsigned long gSMSPollPrevMillis = 0;
+const long gSMSPollInterval = 10000; // Interval 5 seconds
+
+
+
 
 void ladln(const String &text, bool toDisplay = true) {
   Serial.println(text);
@@ -96,7 +100,9 @@ void lad(int number, bool toDisplay = true) {
 }
 
 
-void sendSlackMessage(String message) {
+bool sendSlackMessage(String message) {
+  bool result = false;
+
   if (WiFi.status() == WL_CONNECTED) {
     HTTPClient http;
     
@@ -114,6 +120,7 @@ void sendSlackMessage(String message) {
       String response = http.getString();
       Serial.println("HTTP Antwort-Code: " + String(httpResponseCode));
       Serial.println("Antwort: " + response);
+      result = true;
     } else {
       Serial.println("Fehler beim HTTP POST: " + String(httpResponseCode));
     }
@@ -122,6 +129,8 @@ void sendSlackMessage(String message) {
   } else {
     Serial.println("WiFi nicht verbunden");
   }
+
+  return result;
 }
 
 
@@ -219,48 +228,6 @@ void setup() {
   ladln("Verbunden mit WLAN");
 
 
-   // count SMS in sim card
-    int8_t smsnum = sim800l.getNumSMS();
-    if (smsnum < 0) {
-      Serial.println(F("Could not read # SMS"));
-    } else {
-      Serial.print(smsnum);
-      Serial.println(F(" SMS's on SIM card!"));
-    }
-
-
-    // read all SMS
-            // read all SMS
-        //int8_t smsnum = sim800l.getNumSMS();
-        uint16_t smslen;
-        int8_t smsn;
-
-       /* if ( (type == FONA3G_A) || (type == FONA3G_E) ) {
-          smsn = 0; // zero indexed
-          smsnum--;
-        } else {*/
-          smsn = 1;  // 1 indexed
-        //}
-
-        for ( ; smsn <= smsnum; smsn++) {
-          Serial.print(F("\n\rReading SMS #")); Serial.println(smsn);
-          if (!sim800l.readSMS(smsn, replybuffer, 250, &smslen)) {  // pass in buffer and max len!
-            Serial.println(F("Failed!"));
-            break;
-          }
-          // if the length is zero, its a special case where the index number is higher
-          // so increase the max we'll look at!
-          if (smslen == 0) {
-            Serial.println(F("[empty slot]"));
-            smsnum++;
-            continue;
-          }
-
-          Serial.print(F("***** SMS #")); Serial.print(smsn);
-          Serial.print(" ("); Serial.print(smslen); Serial.println(F(") bytes *****"));
-          Serial.println(replybuffer);
-          Serial.println(F("*****"));
-        }
 
 
   // Set up the FONA to send a +CMTI notification
@@ -318,6 +285,54 @@ void updateCurrentTime(){
     updateTextWithCurrentTime(timeBuffer);
 }
 
+
+void forwardAndDeleteSMSIfNeeded() {
+  // get count of SMS
+  int8_t countSms = sim800l.getNumSMS();
+  if (countSms > 0) {
+      Serial.print(F("Found ")); Serial.print(countSms); Serial.println(F(" new SMS's on SIM card!"));
+
+      // open each SMS 
+      uint16_t smslen;
+      int8_t smsn = 1;
+      char smsTextBuffer[255];
+
+      for ( ; smsn <= countSms; smsn++) {
+        Serial.print(F("\n\rReading SMS #")); Serial.println(smsn);
+        if (!sim800l.readSMS(smsn, smsTextBuffer, 250, &smslen)) {  // pass in buffer and max len!
+          Serial.println(F("SMS Read Failed!"));
+          break;
+        }
+        // if the length is zero, its a special case where the index number is higher
+        // so increase the max we'll look at!
+        if (smslen == 0) {
+          Serial.println(F("[empty slot]"));
+          countSms++;
+          continue;
+        }
+
+        Serial.print(F("***** SMS #")); Serial.print(smsn);
+        Serial.print(" ("); Serial.print(smslen); Serial.println(F(") bytes *****"));
+        Serial.println(smsTextBuffer);
+        Serial.println(F("*****"));
+
+        String slackMessange = "Received New SMS: '" + String(smsTextBuffer) + "'"; 
+        if (sendSlackMessage(String(slackMessange))) {
+          // delete SMS
+          Serial.print(F("\n\rDeleting SMS #")); Serial.println(smsn);
+          if (sim800l.deleteSMS(smsn)) {
+            Serial.println(F(" Successful deleted!"));
+          } else {
+            Serial.println(F("Couldn't delete"));
+          }
+        } else {
+          Serial.println(F("ERROR: SMS not deleted because of error during send to Slack"));
+        }
+
+      }
+    } 
+}
+
 long prevMillis = 0;
 int interval = 1000;
 char sim800lNotificationBuffer[64];          //for notifications from the FONA
@@ -345,6 +360,14 @@ void loop() {
   if (currentMillis - gTimePrevMillis >= gTimeInterval) {
     gTimePrevMillis = currentMillis;
     updateCurrentTime();
+  }
+
+  // get the count of received SMS and forward them
+  // after it we delete the SMS
+
+  if (currentMillis - gSMSPollPrevMillis >= gSMSPollInterval) {
+    gSMSPollPrevMillis = currentMillis;
+    forwardAndDeleteSMSIfNeeded();
   }
 
 
