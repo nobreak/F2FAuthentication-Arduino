@@ -13,7 +13,6 @@ HardwareSerial *gGSMModemBus = &Serial1;
 Adafruit_FONA sim800l = Adafruit_FONA(SIM800L_PWRKEY); 
 
 
-
 /**
 * Display
 **/
@@ -83,6 +82,8 @@ void lad(int number, bool toDisplay = true) {
     gDisplay.display();
   }
 }
+
+
 
 
 
@@ -168,31 +169,6 @@ void setup() {
 
 
 
-  
-
-  // char imei[16] = {0}; // MUST use a 16 character buffer for IMEI!
-  // uint8_t imeiLen = sim800l.getIMEI(imei);
-  // if (imeiLen > 0) {
-  //   lad("SIM card IMEI: ", false); ladln(imei), false;
-  // }
-
-  // uint8_t netStatus = sim800l.getNetworkStatus();
-  // if (netStatus > 0) {
-  //   lad("Net Status: ", false); ladln(netStatus, false);
-  // } else {
-  //   ladln("Net Status: error"); 
-  // }
-
-  // uint8_t smsstorage = gGSMModemBus->print("AT+CPMS=?\r\n");
-  // if (smsstorage > 0) {
-  //   lad("Storage Status: ", false); ladln(smsstorage, false);
-  // } else {
-  //   ladln("Storage Status: error"); 
-  // }
-
-//sim800l.unlockSIM(simPIN);
-//  delay(2000);
-
   // Set up the FONA to send a +CMTI notification
   // when an SMS is received
   /*gGSMModemBus->print("AT+CNETLIGHT=1\r\n"); 
@@ -202,7 +178,6 @@ void setup() {
   gGSMModemBus->print("AT\r\n");
   */
 
-  //ladln(F("GSM modem is ready!"));
 }
 
 void forwardFromUart()
@@ -238,6 +213,12 @@ char sim800lNotificationBuffer[64];          //for notifications from the FONA
 char smsBuffer[250];
 String smsString = "";
 
+
+
+
+/**
+*
+**/
 void loop() {
 
   
@@ -250,6 +231,11 @@ void loop() {
   }
     
     
+  
+
+
+
+
 
   // put your main code here, to run repeatedly:
 

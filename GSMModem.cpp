@@ -125,3 +125,29 @@ SignalStrength getSignalStrength() {
   return strength;
 }
 
+
+
+  
+
+  // char imei[16] = {0}; // MUST use a 16 character buffer for IMEI!
+  // uint8_t imeiLen = sim800l.getIMEI(imei);
+  // if (imeiLen > 0) {
+  //   lad("SIM card IMEI: ", false); ladln(imei), false;
+  // }
+
+  // uint8_t netStatus = sim800l.getNetworkStatus();
+  // if (netStatus > 0) {
+  //   lad("Net Status: ", false); ladln(netStatus, false);
+  // } else {
+  //   ladln("Net Status: error"); 
+  // }
+
+  // uint8_t smsstorage = gGSMModemBus->print("AT+CPMS=?\r\n");
+  // if (smsstorage > 0) {
+  //   lad("Storage Status: ", false); ladln(smsstorage, false);
+  // } else {
+  //   ladln("Storage Status: error"); 
+  // }
+
+//sim800l.unlockSIM(simPIN);
+//  delay(2000);
