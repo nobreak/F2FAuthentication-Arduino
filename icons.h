@@ -23,6 +23,20 @@ const unsigned char PROGMEM iconSgnStrengthPoor[] = {
   B01000000
 };
 
+
+const unsigned char PROGMEM iconWifi[] = {
+  B00000000,
+  B00011000,
+  B01100110,
+  B10000001,
+  B00111100,
+  B01000010,
+  B00011000,
+  B00011000,
+};
+
+
+
 const unsigned char PROGMEM iconSgnStrengthFair[] = {
   0x0,  
   0x0,
