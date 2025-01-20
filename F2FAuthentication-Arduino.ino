@@ -7,6 +7,8 @@
 #include <WiFi.h>
 #include <HTTPClient.h>
 
+#include "debug.h"
+
 const char* ssid = WIFI_SSID;
 const char* password = WIFI_PASSWORD;
 
@@ -213,6 +215,12 @@ void setup() {
     updateSignalStrengthIfNeeded();
   } else {
     ladln("GSM Network not available.");
+
+    
+  #ifdef DEBUG
+    printMenu();
+  #endif
+
   }
 
   if (!sim800l.enableNetworkTimeSync(true)) {
@@ -346,6 +354,10 @@ String smsString = "";
 * Main Loop
 **/
 void loop() {
+
+  #ifdef DEBUG
+    debugLoop();
+  #else
     unsigned long currentMillis = millis();
 
   // get the signal strength and update the diplay if it has changed
@@ -449,8 +461,12 @@ void loop() {
 
 
     forwardFromUart();
+
+    
   
   }
+  #endif
+  
 
 }
 
