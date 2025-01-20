@@ -42,6 +42,7 @@ unsigned long gTimePrevMillis = 0;
 const long gTimeInterval = 5000; // Interval 5 seconds
 
 
+char replybuffer[255];
 
 void ladln(const String &text, bool toDisplay = true) {
   Serial.println(text);
@@ -173,6 +174,49 @@ void setup() {
   if (!sim800l.enableNetworkTimeSync(true)) {
     Serial.println(F("Failed to enable Network Time"));
   }
+
+   // count SMS in sim card
+    int8_t smsnum = sim800l.getNumSMS();
+    if (smsnum < 0) {
+      Serial.println(F("Could not read # SMS"));
+    } else {
+      Serial.print(smsnum);
+      Serial.println(F(" SMS's on SIM card!"));
+    }
+
+
+    // read all SMS
+            // read all SMS
+        //int8_t smsnum = sim800l.getNumSMS();
+        uint16_t smslen;
+        int8_t smsn;
+
+       /* if ( (type == FONA3G_A) || (type == FONA3G_E) ) {
+          smsn = 0; // zero indexed
+          smsnum--;
+        } else {*/
+          smsn = 1;  // 1 indexed
+        //}
+
+        for ( ; smsn <= smsnum; smsn++) {
+          Serial.print(F("\n\rReading SMS #")); Serial.println(smsn);
+          if (!sim800l.readSMS(smsn, replybuffer, 250, &smslen)) {  // pass in buffer and max len!
+            Serial.println(F("Failed!"));
+            break;
+          }
+          // if the length is zero, its a special case where the index number is higher
+          // so increase the max we'll look at!
+          if (smslen == 0) {
+            Serial.println(F("[empty slot]"));
+            smsnum++;
+            continue;
+          }
+
+          Serial.print(F("***** SMS #")); Serial.print(smsn);
+          Serial.print(" ("); Serial.print(smslen); Serial.println(F(") bytes *****"));
+          Serial.println(replybuffer);
+          Serial.println(F("*****"));
+        }
 
 
   // Set up the FONA to send a +CMTI notification
