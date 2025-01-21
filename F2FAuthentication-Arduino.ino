@@ -181,7 +181,7 @@ void setup() {
 
   // Display
   if (!gDisplay.begin(SSD1306_SWITCHCAPVCC, 0x3C)) { // check the adresse with your device
-    Serial.println(F("Error: Display is not initalized"));
+    Serial.println(F("Error: Display\r\nis not initalized"));
   }
 
   gDisplay.clearDisplay();
@@ -194,7 +194,7 @@ void setup() {
   updateIconSignalStrength(SignalStrength::zero);
   
   ladln(F("#### F2FA on ESP32 with GSM SIM800L ####"), false);
-  ladln(F("Initalising GSM modem ..."));
+  ladln(F("Initalising GSM\r\nmodem..."));
 
 
   // now lets switch on the SIM800 modem
@@ -212,15 +212,15 @@ void setup() {
     gGSMModemConnected = true;
     ladln("GSM modem is ready");
   } else {
-    ladln("GSM modem can not activated!");
+    ladln("GSM modem can\r\nnot be activated!");
   }
   
   if (!sim800l.begin(*gGSMModemBus)) { // Adafruit_FONA is starting now some standard routines on the GSM modem
-    ladln(F("Couldn't find GSM SIM800L"));
+    ladln(F("Couldn't find\r\nGSM SIM800L"));
     while (1); // stay here
   }
 
-  ladln("Connecting GSM network ...");
+  ladln("Connecting GSM\r\nnetwork...");
   if (waitForNetwork(30000)) { // wait upto 60 seconds
     gGSMNetworkTimeEnabled = true;
     ladln("GSM Network connected.");
@@ -245,13 +245,17 @@ void setup() {
   WiFi.begin(ssid, password);
   while (WiFi.status() != WL_CONNECTED) {
     delay(1000);
-    ladln("Verbinde mit WLAN...");
+    ladln("Connecting Wifi...");
   }
   
   gWifiConnected = true;
   updateIconWifi(gWifiConnected);
-  ladln("Verbunden mit WLAN");
+  ladln("Wifi Connected", false);
 
+   
+  #ifdef DEBUG
+    printMenu();
+  #endif
 
 
 
