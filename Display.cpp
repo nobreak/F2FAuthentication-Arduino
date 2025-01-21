@@ -45,8 +45,19 @@ void updateIconWifi(bool isVisible){
   } 
 
   gDisplay.display();
+void updateIconMessage(int8_t countSms) {
+  clearRectOnDisplay(0, 0, 32, 8);
   
+  if (countSms > 0 ) {
+    const unsigned char* resultIcon = iconMessage;
+    gDisplay.drawBitmap(0,0, resultIcon, 12,8, WHITE);
+    gDisplay.setCursor(14, 0);
+    gDisplay.print(countSms);
+  }
+  
+  gDisplay.display();
 }
+
 
 // is avainting a charbuffer with this formated text inside: 25/01/20,02:19:12+04
 void updateTextWithCurrentTime(char* buffer){

@@ -308,8 +308,9 @@ void updateCurrentTime(){
 
 
 void forwardAndDeleteSMSIfNeeded() {
-  // get count of SMS
   int8_t countSms = sim800l.getNumSMS();
+  updateIconMessage(countSms);
+
   if (countSms > 0) {
       Serial.print(F("Found ")); Serial.print(countSms); Serial.println(F(" new SMS's on SIM card!"));
 
