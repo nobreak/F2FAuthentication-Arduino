@@ -225,22 +225,17 @@ void setup() {
 
   ladln("Connecting GSM\r\nnetwork...");
   if (waitForNetwork(30000)) { // wait upto 60 seconds
-    gGSMNetworkTimeEnabled = true;
-    ladln("GSM Network connected.");
+    gGSMNetworkConnected = true;
+    ladln("GSM Network\r\nconnected.");
     updateSignalStrengthIfNeeded();
   } else {
-    ladln("GSM Network not available.");
-
-    
-  #ifdef DEBUG
-    printMenu();
-  #endif
-
+    ladln("GSM Network\r\nnot available.");
   }
 
   if (!sim800l.enableNetworkTimeSync(true)) {
     Serial.println(F("Failed to enable Network Time"));
   } else {
+    Serial.println(F("Enabled GSM network time"));
     gGSMNetworkTimeEnabled = true;
   }
 
@@ -311,11 +306,10 @@ void updateCurrentTime(){
     char* result = strstr(timeBuffer, searchString);
 
     if (result != NULL) {
-          Serial.print(F("Time = ")); Serial.print(timeBuffer);  Serial.print(F("++++NOT VALID"));
-      return;
+      Serial.print(F("Time = ")); Serial.print(timeBuffer);  Serial.print(F("++++NOT VALID"));
+    } else {
+      updateTextWithCurrentTime(timeBuffer);
     }
-
-    updateTextWithCurrentTime(timeBuffer);
 }
 
 
@@ -351,7 +345,7 @@ void forwardAndDeleteSMSIfNeeded() {
         Serial.println(F("*****"));
 
         String slackMessange = "Received New SMS: '" + String(smsTextBuffer) + "'"; 
-        if (sendSlackMessage(String(slackMessange))) {
+        if (sendSlackMessage(String(slackMessange)) == true ) {
           // delete SMS
           Serial.print(F("\n\rDeleting SMS #")); Serial.println(smsn);
           if (sim800l.deleteSMS(smsn)) {
@@ -400,9 +394,9 @@ void loop() {
 
   // get the count of received SMS and forward them
   // after it we delete the SMS
-
-  if (gGSMNetworkConnected == true && currentMillis - gSMSPollPrevMillis >= gSMSPollInterval) {
+  if (gGSMNetworkTimeEnabled == true && currentMillis - gSMSPollPrevMillis >= gSMSPollInterval) {
     gSMSPollPrevMillis = currentMillis;
+    // get count of SMS
     forwardAndDeleteSMSIfNeeded();
   }
 
