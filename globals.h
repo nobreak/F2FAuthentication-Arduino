@@ -9,7 +9,7 @@
 #include "GSMModem.h"
 
 
-#define DEBUG
+//#define DEBUG
 
 /**
 * HARDWARE SETUP
