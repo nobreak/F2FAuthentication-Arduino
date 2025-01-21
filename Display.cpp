@@ -36,15 +36,15 @@ void updateIconSignalStrength(SignalStrength strength) {
 }
 
 void updateIconWifi(bool isVisible){
-  
-  clearRectOnDisplay(111, 0, 8, 8);
-
+  clearRectOnDisplay(110, 0, 8, 8);
   if (isVisible == true) {
     const unsigned char* resultIcon = iconWifi;
-    gDisplay.drawBitmap(111,0, resultIcon, 8,8, WHITE);
+    gDisplay.drawBitmap(110,0, resultIcon, 8,8, WHITE);
   } 
-
   gDisplay.display();
+}
+
+
 void updateIconMessage(int8_t countSms) {
   clearRectOnDisplay(0, 0, 32, 8);
   
