@@ -124,13 +124,17 @@ bool sendSlackMessage(String message) {
     // POST-Anfrage senden
     int httpResponseCode = http.POST(payload);
     
-    if (httpResponseCode > 0) {
+    if (httpResponseCode > 0 ) {
       String response = http.getString();
-      Serial.println("HTTP Antwort-Code: " + String(httpResponseCode));
+      if (httpResponseCode >= 300) {
+          Serial.println("Fehler beim HTTP POST: " + String(httpResponseCode));
+      } else {
+          Serial.println("HTTP Antwort-Code: " + String(httpResponseCode));
+          result = true;
+      }
       Serial.println("Antwort: " + response);
-      result = true;
     } else {
-      Serial.println("Fehler beim HTTP POST: " + String(httpResponseCode));
+      Serial.println("Unknown error during HTTP POST: " + String(httpResponseCode));
     }
     
     http.end();
