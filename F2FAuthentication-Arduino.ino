@@ -240,6 +240,7 @@ void setup() {
   }
 
   // connecting Wifi
+  delay(1000); // when we try to connect WiFi directly after having a GSM network, often we have not enough amper available on USB
   WiFi.begin(ssid, password);
   while (WiFi.status() != WL_CONNECTED) {
     delay(1000);
