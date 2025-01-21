@@ -34,7 +34,7 @@ Adafruit_SSD1306 gDisplay(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, -1);
 char simPIN[]   = SIM_PIN; // SIM card PIN code, if any
 
 /**
-* SPecial Runtime feature toggles
+* Special Runtime feature toggles
 **/
 // if there is the need to reset the modem
 //#define RESET_SIM800 
@@ -108,6 +108,9 @@ void lad(int number, bool toDisplay = true) {
 }
 
 
+/**
+*
+**/
 bool sendSlackMessage(String message) {
   bool result = false;
 
@@ -296,6 +299,7 @@ void updateSignalStrengthIfNeeded(){
     gLastSignalStrength = sgnStrngth;
   }
 }
+
 
 void updateCurrentTime(){
     char timeBuffer[23];
