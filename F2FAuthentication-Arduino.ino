@@ -57,10 +57,7 @@ const long gSMSPollInterval = 10000; // Interval 5 seconds
 /**
 * Some runtime status information
 **/
-bool gGSMModemConnected = false;
-bool gGSMNetworkConnected = false;
-bool gGSMNetworkTimeEnabled = false;
-bool gWifiConnected = false;
+DeviceState* gDeviceState = new DeviceState();
 
 
 void ladln(const String &text, bool toDisplay = true) {
@@ -211,44 +208,48 @@ void setup() {
   
   ladln("Wait for GSM modem...", false);
   unsigned long timeout = 10000;
-  if (waitForGSMModem(timeout)) {
-    gGSMModemConnected = true;
+  if (waitForGSMModem(timeout) == true) {
+    gDeviceState->set(EDeviceState::modem, ON);
     ladln("GSM modem is ready");
+
+    if (!sim800l.begin(*gGSMModemBus)) { // Adafruit_FONA is starting now some standard routines on the GSM modem
+      ladln(F("Couldn't find\r\nGSM SIM800L"));
+      // TODO ERROR
+      while (1); // stay here
+    }
+
+    ladln("Connecting GSM\r\nnetwork...");
+    if (gDeviceState->get(EDeviceState::modem) == true && waitForNetwork(WaitForGSMNetWorkTimeout)) { // wait upto 30 seconds
+      gDeviceState->set(EDeviceState::network, ON);
+      ladln("GSM Network\r\nconnected.");
+      updateSignalStrengthIfNeeded();
+
+      if (sim800l.enableNetworkTimeSync(true) == true) {
+        Serial.println(F("Enabled GSM network time"));
+        gDeviceState->set(EDeviceState::networkTime, ON);
+      } else {
+        Serial.println(F("Failed to enable Network Time"));
+        // TODO ERROR
+      }
+    } else {
+      ladln("GSM Network\r\nnot available.");
+      // TODO ERROR
+    }
   } else {
+    // TODO ERROR
     ladln("GSM modem can\r\nnot be activated!");
   }
   
-  if (!sim800l.begin(*gGSMModemBus)) { // Adafruit_FONA is starting now some standard routines on the GSM modem
-    ladln(F("Couldn't find\r\nGSM SIM800L"));
-    while (1); // stay here
-  }
-
-  ladln("Connecting GSM\r\nnetwork...");
-  if (waitForNetwork(30000)) { // wait upto 30 seconds
-    gGSMNetworkConnected = true;
-    ladln("GSM Network\r\nconnected.");
-    updateSignalStrengthIfNeeded();
-  } else {
-    ladln("GSM Network\r\nnot available.");
-  }
-
-  if (!sim800l.enableNetworkTimeSync(true)) {
-    Serial.println(F("Failed to enable Network Time"));
-  } else {
-    Serial.println(F("Enabled GSM network time"));
-    gGSMNetworkTimeEnabled = true;
-  }
-
   // connecting Wifi
-  delay(1000); // when we try to connect WiFi directly after having a GSM network, often we have not enough amper available on USB
+  delay(1000); // when we try to connect WiFi directly after having a GSM network, often we have not enough amps available on USB
   WiFi.begin(ssid, password);
+  ladln("Connecting Wifi...");
   while (WiFi.status() != WL_CONNECTED) {
     delay(1000);
-    ladln("Connecting Wifi...");
   }
   
-  gWifiConnected = true;
-  updateIconWifi(gWifiConnected);
+  gDeviceState->set(EDeviceState::wifi, ON);
+  updateIconWifi(ON);
   ladln("Wifi Connected", false);
 
    
@@ -382,20 +383,20 @@ void loop() {
     unsigned long currentMillis = millis();
 
   // get the signal strength and update the diplay if it has changed
-  if (gGSMNetworkConnected == true && currentMillis - gSignalStrengthPrevMillis >= gSignalStrengthInterval) {
+  if (gDeviceState->get(EDeviceState::network) == ON && currentMillis - gSignalStrengthPrevMillis >= gSignalStrengthInterval) {
     gSignalStrengthPrevMillis = currentMillis;
     updateSignalStrengthIfNeeded();
   }
     
   // get the time and update the display
-  if (gGSMNetworkTimeEnabled == true && (currentMillis - gTimePrevMillis >= gTimeInterval)) {
+  if (gDeviceState->get(EDeviceState::networkTime) == ON && (currentMillis - gTimePrevMillis >= gTimeInterval)) {
     gTimePrevMillis = currentMillis;
     updateCurrentTime();
   }
 
   // get the count of received SMS and forward them
   // after it we delete the SMS
-  if (gGSMNetworkTimeEnabled == true && currentMillis - gSMSPollPrevMillis >= gSMSPollInterval) {
+  if (gDeviceState->get(EDeviceState::network) == ON && currentMillis - gSMSPollPrevMillis >= gSMSPollInterval) {
     gSMSPollPrevMillis = currentMillis;
     // get count of SMS
     forwardAndDeleteSMSIfNeeded();
