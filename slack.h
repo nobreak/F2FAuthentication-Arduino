@@ -17,7 +17,6 @@ class Slack {
     
     // public Methoden
     bool sendMessage(String message); 
-    bool sendDeviceStatus();
 };
 
 

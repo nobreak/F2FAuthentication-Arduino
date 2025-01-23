@@ -45,10 +45,3 @@ bool Slack::sendMessage(String message) {
   return result;
 }
 
-bool Slack::sendDeviceStatus() {
-
-  // create the status text:
-  // Current Device State
-  return true;
-}
-

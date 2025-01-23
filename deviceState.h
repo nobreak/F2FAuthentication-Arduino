@@ -28,6 +28,7 @@ class DeviceState {
     void resetAll();
     void set(EDeviceState stateID, bool value);
     bool get(EDeviceState stateID);
+    String getDescription();
 
 };
 
