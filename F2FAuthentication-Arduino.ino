@@ -203,7 +203,7 @@ void setup() {
   // now lets switch on the SIM800 modem
   digitalWrite(SIM800L_POWER, HIGH);
 
-//Begin serial communication with Arduino and SIM800L
+  //Begin serial communication with Arduino and SIM800L
   gGSMModemBus->begin(BAUDRATE_SMS_CALL);
   while (!gGSMModemBus) {
     ; // wait for connection object port
@@ -224,7 +224,7 @@ void setup() {
   }
 
   ladln("Connecting GSM\r\nnetwork...");
-  if (waitForNetwork(30000)) { // wait upto 60 seconds
+  if (waitForNetwork(30000)) { // wait upto 30 seconds
     gGSMNetworkConnected = true;
     ladln("GSM Network\r\nconnected.");
     updateSignalStrengthIfNeeded();
