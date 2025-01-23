@@ -6,7 +6,10 @@
 #include <Wire.h>
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
+#include <WiFi.h>
 #include "GSMModem.h"
+#include "environment_secrets.h"
+#include "slack.h"
 #include "deviceState.h"
 
 

@@ -2,15 +2,6 @@
 #include "globals.h"
 #include "GSMModem.h"
 #include "Display.h"
-#include "environment_secrets.h"
-
-#include <WiFi.h>
-#include <HTTPClient.h>
-
-#include "debug.h"
-
-const char* ssid = WIFI_SSID;
-const char* password = WIFI_PASSWORD;
 
 
 
@@ -59,6 +50,14 @@ const long gSMSPollInterval = 10000; // Interval 5 seconds
 **/
 DeviceState* gDeviceState = new DeviceState();
 
+/**
+* Slack and Wifi
+**/
+const char* ssid = WIFI_SSID;
+const char* password = WIFI_PASSWORD;
+Slack* gSlack = new Slack(SLACK_WEBHOOK_URL);
+
+
 
 void ladln(const String &text, bool toDisplay = true) {
   Serial.println(text);
@@ -104,45 +103,6 @@ void lad(int number, bool toDisplay = true) {
   }
 }
 
-
-/**
-*
-**/
-bool sendSlackMessage(String message) {
-  bool result = false;
-
-  if (WiFi.status() == WL_CONNECTED) {
-    HTTPClient http;
-    
-    // Slack Webhook URL
-    http.begin(SLACK_WEBHOOK_URL);
-    http.addHeader("Content-Type", "application/json");
-    
-    // JSON-Payload erstellen
-    String payload = "{\"text\":\"" + message + "\"}";
-    
-    // POST-Anfrage senden
-    int httpResponseCode = http.POST(payload);
-    
-    if (httpResponseCode > 0 ) {
-      String response = http.getString();
-      if (httpResponseCode >= 300) {
-          Serial.println("Fehler beim HTTP POST: " + String(httpResponseCode));
-      } else {
-          Serial.println("HTTP Antwort-Code: " + String(httpResponseCode));
-          result = true;
-      }
-      Serial.println("Antwort: " + response);
-    } else {
-      Serial.println("Unknown error during HTTP POST: " + String(httpResponseCode));
-    }
-    
-    http.end();
-  } else {
-    Serial.println("WiFi nicht verbunden");
-  }
-
-  return result;
 }
 
 
@@ -347,7 +307,7 @@ void forwardAndDeleteSMSIfNeeded() {
         Serial.println(F("*****"));
 
         String slackMessange = "Received New SMS: '" + String(smsTextBuffer) + "'"; 
-        if (sendSlackMessage(String(slackMessange)) == true ) {
+        if (gSlack->sendMessage(String(slackMessange)) == true ) {
           // delete SMS
           Serial.print(F("\n\rDeleting SMS #")); Serial.println(smsn);
           if (sim800l.deleteSMS(smsn)) {
