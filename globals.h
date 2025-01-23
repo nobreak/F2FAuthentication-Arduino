@@ -3,14 +3,12 @@
 
 #include <Arduino.h>
 #include <Adafruit_FONA.h>
-#include <Wire.h>
-#include <Adafruit_GFX.h>
-#include <Adafruit_SSD1306.h>
 #include <WiFi.h>
 #include "GSMModem.h"
 #include "environment_secrets.h"
 #include "slack.h"
 #include "deviceState.h"
+#include "Display.h"
 
 
 //#define DEBUG
@@ -48,7 +46,7 @@ extern Adafruit_FONA sim800l;
 /**
 * Display
 **/
-extern Adafruit_SSD1306 gDisplay;
+extern F2FADisplay* gDisplay;
 #define SCREEN_WIDTH 128
 #define SCREEN_HEIGHT 32
 

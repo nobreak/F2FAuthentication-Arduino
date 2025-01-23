@@ -16,7 +16,7 @@ Adafruit_FONA sim800l = Adafruit_FONA(SIM800L_PWRKEY);
 /**
 * Display
 **/
-Adafruit_SSD1306 gDisplay(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, -1);
+F2FADisplay* gDisplay = NULL; 
 
 
 /**
@@ -63,10 +63,10 @@ void ladln(const String &text, bool toDisplay = true) {
   Serial.println(text);
 
   if (toDisplay) {
-    clearRectOnDisplay(0,8,128,32);
-    gDisplay.setCursor(0, 8);
-    gDisplay.println(text);
-    gDisplay.display();
+    gDisplay->clearRectOnDisplay(0,8,128,32);
+    gDisplay->setCursor(0, 8);
+    gDisplay->println(text);
+    gDisplay->display();
   }
 }
 
@@ -74,10 +74,10 @@ void lad(const String &text, bool toDisplay = true) {
   Serial.print(text);
 
   if (toDisplay) {
-    clearRectOnDisplay(0,8,128,32);
-    gDisplay.setCursor(0, 8);
-    gDisplay.print(text);
-    gDisplay.display();
+    gDisplay->clearRectOnDisplay(0,8,128,32);
+    gDisplay->setCursor(0, 8);
+    gDisplay->print(text);
+    gDisplay->display();
   }
 }
 
@@ -85,10 +85,10 @@ void ladln(int number, bool toDisplay = true) {
   Serial.println(number);
 
   if (toDisplay) {
-    clearRectOnDisplay(0,8,128,32);
-    gDisplay.setCursor(0, 8);
-    gDisplay.println(number);
-    gDisplay.display();
+    gDisplay->clearRectOnDisplay(0,8,128,32);
+    gDisplay->setCursor(0, 8);
+    gDisplay->println(number);
+    gDisplay->display();
   }
 }
 
@@ -96,10 +96,10 @@ void lad(int number, bool toDisplay = true) {
   Serial.print(number);
 
   if (toDisplay) {
-    clearRectOnDisplay(0,8,128,32);
-    gDisplay.setCursor(0, 8);
-    gDisplay.print(number);
-    gDisplay.display();
+    gDisplay->clearRectOnDisplay(0,8,128,32);
+    gDisplay->setCursor(0, 8);
+    gDisplay->print(number);
+    gDisplay->display();
   }
 }
 
@@ -110,6 +110,27 @@ void lad(int number, bool toDisplay = true) {
 * SETUP
 *****/
 void setup() {
+
+  // to see waht happens in de IDE we need the serial bus at first
+  //Begin serial communication with ESP32 and Arduino IDE (Serial Monitor to log into IDE what happens)
+  SerialIDE.begin(115200);
+  // We dont want to loose any messages after first boot of the device, 
+  // so we wait for the object and additionally some time (5s)
+  delay(5000);
+  while (!SerialIDE) {
+    ; // wait for connection object port
+  }
+
+
+  // next we need a display
+  gDisplay = new F2FADisplay(SCREEN_WIDTH, SCREEN_HEIGHT, 0x3C);  // check the adresse with your device
+
+  if (gDisplay != NULL || gDisplay->isConnected == true) {
+    gDeviceState->set(EDeviceState::display, ON);
+    ladln(F("#### F2FA on ESP32 with GSM SIM800L ####"), false);
+  } else {
+    // it's an error, ok, but we still can proceed without display
+  }
   
   // set pins into right mode
   pinMode(LED_BLUE, OUTPUT); // we want to have the blue pin available
@@ -130,28 +151,9 @@ void setup() {
     delay(3000); // wait for restart
   #endif
   
-  //Begin serial communication with ESP32 and Arduino IDE (Serial Monitor to log into IDE what happens)
-  SerialIDE.begin(115200);
-  // We dont want to loose any messages after first boot of the device, 
-  // so we wait for the object and additionally some time (5s)
-  delay(5000);
-  while (!SerialIDE) {
-    ; // wait for connection object port
-  }
-
-  // Display
-  if (!gDisplay.begin(SSD1306_SWITCHCAPVCC, 0x3C)) { // check the adresse with your device
-    Serial.println(F("Error: Display\r\nis not initalized"));
-  }
-
-  gDisplay.clearDisplay();
-  gDisplay.setTextSize(1);
-  gDisplay.setTextColor(SSD1306_WHITE);
-  gDisplay.setRotation(0);
-  gDisplay.invertDisplay(false);
-  updateIconSignalStrength(SignalStrength::zero);
   
-  ladln(F("#### F2FA on ESP32 with GSM SIM800L ####"), false);
+  
+  
   ladln(F("Initalising GSM\r\nmodem..."));
 
 
@@ -207,7 +209,7 @@ void setup() {
   }
   
   gDeviceState->set(EDeviceState::wifi, ON);
-  updateIconWifi(ON);
+  gDisplay->updateIconWifi(ON);
   ladln("Wifi Connected", false);
 
    
@@ -250,7 +252,7 @@ void updateSignalStrengthIfNeeded(){
 
   if (sgnStrngth != gLastSignalStrength) {
     Serial.print(F("New Signal Strength")); Serial.println(sgnStrngth);
-    updateIconSignalStrength(sgnStrngth);
+    gDisplay->updateIconSignalStrength((F2FADisplay::DisplaySignalStrength)sgnStrngth);
     gLastSignalStrength = sgnStrngth;
   }
 }
@@ -268,14 +270,14 @@ void updateCurrentTime(){
     if (result != NULL) {
       Serial.print(F("Time = ")); Serial.print(timeBuffer);  Serial.print(F("++++NOT VALID"));
     } else {
-      updateTextWithCurrentTime(timeBuffer);
+      gDisplay->updateTextWithCurrentTime(timeBuffer);
     }
 }
 
 
 void forwardAndDeleteSMSIfNeeded() {
   int8_t countSms = sim800l.getNumSMS();
-  updateIconMessage(countSms);
+  gDisplay->updateIconMessage(countSms);
 
   if (countSms > 0) {
       Serial.print(F("Found ")); Serial.print(countSms); Serial.println(F(" new SMS's on SIM card!"));

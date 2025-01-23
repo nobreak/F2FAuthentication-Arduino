@@ -8,7 +8,8 @@
 
 
 enum EDeviceState {
-  modem = 0,
+  display = 0,
+  modem,
   network,
   networkTime,
   wifi,
