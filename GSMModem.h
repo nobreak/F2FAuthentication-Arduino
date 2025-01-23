@@ -18,6 +18,7 @@ bool waitForNetwork(unsigned long timeout);
 bool isNetworkConnected();
 SignalStrength getSignalStrength();
 int8_t getSignalStrengthDbm();
+bool isGSMModemOnline();
 
 
 

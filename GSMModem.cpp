@@ -52,6 +52,19 @@ bool waitForGSMModem(unsigned long timeout = 10000) {
   return false; // Timeout erreicht, Modem nicht bereit
 }
 
+bool isGSMModemOnline() {
+  bool result = false;
+  if (waitForGSMModem(100) == true) {
+    // ok modem still is running
+    Serial.println("Modem is running");
+    result = true;
+  } else {
+    // oh what happens, modem is not answering, is it off ? 
+    Serial.println("Modem is off, maybe to much power consuption?");
+  }
+  return result;
+}
+
 
 bool waitForNetwork(unsigned long timeout) {
   unsigned long start = millis();
@@ -59,9 +72,16 @@ bool waitForNetwork(unsigned long timeout) {
     if (isNetworkConnected() == true) {
       Serial.println("Mit Netzwerk verbunden!");
       return true;
+    } else {
+      Serial.println("Warte auf Netzwerkverbindung...");
+      // was not able to connect network, maybe modem is offline ?
+      if (isGSMModemOnline() == false) {
+        // network connection is not possible, because modem is off
+        break;
+      }
+
+      delay(1000); // wait some time, maybe model still is initalizing
     }
-    delay(1000);
-    Serial.println("Warte auf Netzwerkverbindung...");
   }
   Serial.println("Netzwerkverbindung fehlgeschlagen");
   return false;
