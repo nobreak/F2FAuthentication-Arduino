@@ -15,6 +15,11 @@
 
 //#define DEBUG
 
+#ifdef DEBUG
+  #include "debug.h"
+#endif
+
+
 /**
 * HARDWARE SETUP
 **/
@@ -48,6 +53,10 @@ extern Adafruit_SSD1306 gDisplay;
 #define SCREEN_HEIGHT 32
 
 
+/**
+* Timer timeouts
+**/
+#define WaitForGSMNetWorkTimeout 30000 // 30 s
 
 
 #endif

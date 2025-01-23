@@ -106,9 +106,9 @@ void lad(int number, bool toDisplay = true) {
 }
 
 
-
-
-
+/****
+* SETUP
+*****/
 void setup() {
   
   // set pins into right mode
@@ -149,8 +149,6 @@ void setup() {
   gDisplay.setTextColor(SSD1306_WHITE);
   gDisplay.setRotation(0);
   gDisplay.invertDisplay(false);
-  
-
   updateIconSignalStrength(SignalStrength::zero);
   
   ladln(F("#### F2FA on ESP32 with GSM SIM800L ####"), false);
@@ -218,13 +216,13 @@ void setup() {
   #endif
 
 
-
+  // removing all texts, before handing over to main llop
+  ladln(""); 
+  
   // Set up the FONA to send a +CMTI notification
   // when an SMS is received
   /*gGSMModemBus->print("AT+CNETLIGHT=1\r\n"); 
-
   gGSMModemBus->print("AT+CNMI=2,1\r\n");
-
   gGSMModemBus->print("AT\r\n");
   */
 
