@@ -111,7 +111,7 @@ void lad(int number, bool toDisplay = true) {
 *****/
 void setup() {
 
-  // to see waht happens in de IDE we need the serial bus at first
+  // to see waht happens in the IDE we need the serial bus at first
   //Begin serial communication with ESP32 and Arduino IDE (Serial Monitor to log into IDE what happens)
   SerialIDE.begin(115200);
   // We dont want to loose any messages after first boot of the device, 
@@ -132,17 +132,16 @@ void setup() {
     // it's an error, ok, but we still can proceed without display
   }
   
-  // set pins into right mode
-  pinMode(LED_BLUE, OUTPUT); // we want to have the blue pin available
-  pinMode(SIM800L_POWER, OUTPUT); // thats the pin to activate the SIM800
+  // we want to see that ESP32 is on, so lets switch on the blue MC LED
+  pinMode(LED_BLUE, OUTPUT); 
+  digitalWrite(LED_BLUE, HIGH);
 
+  // thats the pin to activate the SIM800
+  pinMode(SIM800L_POWER, OUTPUT); 
   // Keep reset PIN high, thats required in case you want to reset the sim800, you have to set to low
   pinMode(SIM800L_RST, OUTPUT);
   digitalWrite(SIM800L_RST, HIGH);
-
-  // we want to see that ESP32 is on, so lets switch on the blue MC LED
-  digitalWrite(LED_BLUE, HIGH);
-
+  
   // you want reset the sim800?
   #ifdef RESET_SIM800
     digitalWrite(SIM800L_RST, LOW);
@@ -151,13 +150,8 @@ void setup() {
     delay(3000); // wait for restart
   #endif
   
-  
-  
-  
-  ladln(F("Initalising GSM\r\nmodem..."));
-
-
   // now lets switch on the SIM800 modem
+  ladln(F("Initalising GSM\r\nmodem..."));
   digitalWrite(SIM800L_POWER, HIGH);
 
   //Begin serial communication with Arduino and SIM800L
