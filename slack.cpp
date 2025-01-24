@@ -5,8 +5,14 @@ Slack::Slack(String webHook) {
   this->webHook = webHook;
 }
 
-bool Slack::sendMessage(String message) {
+bool Slack::sendMessage(String message, bool shouldEscapeStrings) {
   bool result = false;
+
+  if (shouldEscapeStrings == true) {
+    Serial.print("BEFORE:"); Serial.println(message);
+    message = escapedString(message);
+    Serial.print("After:"); Serial.println(message);
+  }
 
   if (WiFi.status() == WL_CONNECTED) {
     HTTPClient http;
@@ -44,4 +50,22 @@ bool Slack::sendMessage(String message) {
 
   return result;
 }
+
+
+String Slack::escapedString(const String& input) {
+  String output;
+  for (unsigned int i = 0; i < input.length(); i++) {
+    char c = input.charAt(i);
+    switch (c) {
+      case '\\': output += "\\\\"; break;
+      case '\"': output += "\\\""; break;
+      //case '\n': output += "\\n"; break;
+      //case '\r': output += "\\r"; break;
+      //case '\t': output += "\\t"; break;
+      default: output += c;
+    }
+  }
+  return output;
+}
+
 

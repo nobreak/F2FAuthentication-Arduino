@@ -8,7 +8,7 @@
 
 class Slack {
   private:
-    // Private Attribute
+    String escapedString(const String& input);
     String webHook;
     
   public:
@@ -16,7 +16,7 @@ class Slack {
     Slack(String webHook);
     
     // public Methoden
-    bool sendMessage(String message); 
+    bool sendMessage(String message, bool shouldEscapeStrings = true); 
 };
 
 
