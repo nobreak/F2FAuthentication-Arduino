@@ -32,26 +32,30 @@ struct GSMModemInfo {
 
 
 class GSMModem {
-  private: 
-    HardwareSerial* hardwareSerialBus;
-    GSMModemInfo info;
-    Adafruit_FONA hwSBSIM800L; 
-
   public:
     GSMModem(HardwareSerial* hardwareSerialBus, GSMModemInfo modemInfo);
 
-    bool setup();
-    bool waitForGSMModem(unsigned long timeout);
-    bool waitForNetwork(unsigned long timeout);
-    bool isNetworkConnected();
-    SignalStrength getSignalStrength();
-    int8_t getSignalStrengthDbm();
-    bool isGSMModemOnline();
     int8_t getCountSMS();
     bool readSMS(uint8_t messageIndex, char *smsbuff, uint16_t max, uint16_t *readsize);
     bool getTime(char* timeBuffer, uint16_t maxLength);
     bool deleteSMS(uint8_t messageIndex);
+    void reset();
+    bool isNetworkConnected();
+    SignalStrength getSignalStrength();
+    uint8_t getIMEI(char *imei);
+    uint8_t getSMSStorageStatus(); // beta
+    uint8_t unlockSIM(char *pin); // beta
 
+
+  private: 
+    bool waitForGSMModem(unsigned long timeout);
+    bool waitForNetwork(unsigned long timeout);
+    int8_t getSignalStrengthDbm();
+    bool isGSMModemOnline();
+
+    HardwareSerial* hardwareSerialBus;
+    GSMModemInfo info;
+    Adafruit_FONA hwSBSIM800L; 
 };
 
 #endif 

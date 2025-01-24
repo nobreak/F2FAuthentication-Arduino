@@ -67,13 +67,6 @@ GSMModem::GSMModem(HardwareSerial* hardwareSerialBus, GSMModemInfo modemInfo) : 
   }
 }
 
-bool GSMModem::setup() {
-
-  
-
-  return true; 
-}
-
 
 
 bool GSMModem::waitForGSMModem(unsigned long timeout = 10000) {
@@ -230,32 +223,38 @@ bool GSMModem::readSMS(uint8_t messageIndex, char *smsbuff, uint16_t max, uint16
 bool GSMModem::getTime(char* timeBuffer, uint16_t maxLength) {
   return this->hwSBSIM800L.getTime(timeBuffer, maxLength);
 }
+
+
 bool GSMModem::deleteSMS(uint8_t messageIndex) {
   return this->hwSBSIM800L.deleteSMS(messageIndex);
 }
 
+void GSMModem::reset() {
+  digitalWrite(info.pinRST, LOW);
+  delay(100);
+  digitalWrite(info.pinRST, HIGH); 
+  delay(3000); // wait for restart
+}
 
-  
+// returns the length of the IMEI, should be 16
+uint8_t GSMModem::getIMEI(char *imei) {
+  return this->hwSBSIM800L.getIMEI(imei);
+}
 
-  // char imei[16] = {0}; // MUST use a 16 character buffer for IMEI!
-  // uint8_t imeiLen = sim800l.getIMEI(imei);
-  // if (imeiLen > 0) {
-  //   lad("SIM card IMEI: ", false); ladln(imei), false;
-  // }
-
-  // uint8_t netStatus = sim800l.getNetworkStatus();
-  // if (netStatus > 0) {
-  //   lad("Net Status: ", false); ladln(netStatus, false);
+// beta
+uint8_t GSMModem::getSMSStorageStatus() {
+  uint8_t smsStorageStatus = hardwareSerialBus->print("AT+CPMS=?\r\n");
+  return smsStorageStatus;
+  // if (smsStorageStatus > 0) {
+  //   Serial.print("Storage Status: ", false); Serial.println(smsstorage, false);
   // } else {
-  //   ladln("Net Status: error"); 
+  //   Serial.println("Storage Status: error"); 
   // }
+}
 
-  // uint8_t smsstorage = gGSMModemBus->print("AT+CPMS=?\r\n");
-  // if (smsstorage > 0) {
-  //   lad("Storage Status: ", false); ladln(smsstorage, false);
-  // } else {
-  //   ladln("Storage Status: error"); 
-  // }
+// beta, should we have an delay ?
+uint8_t GSMModem::unlockSIM(char *pin) {
+    return this->hwSBSIM800L.unlockSIM(pin);
+  //  delay(2000);
+}
 
-//sim800l.unlockSIM(simPIN);
-//  delay(2000);

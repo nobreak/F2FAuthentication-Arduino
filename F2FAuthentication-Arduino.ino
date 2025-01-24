@@ -102,6 +102,9 @@ void lad(int number, bool toDisplay = true) {
   }
 }
 
+void resetDevice() {
+  gModem->reset();
+  ESP.restart();  
 }
 
 
@@ -135,70 +138,12 @@ void setup() {
   pinMode(LED_BLUE, OUTPUT); 
   digitalWrite(LED_BLUE, HIGH);
 
-  GSMModemInfo modemInfo = GSMModemInfo(); // we are using the defaults
-  gModem = new GSMModem(&Serial1, modemInfo);
 
-  /*// thats the pin to activate the SIM800
-  pinMode(SIM800L_POWER, OUTPUT); 
-  // Keep reset PIN high, thats required in case you want to reset the sim800, you have to set to low
-  pinMode(SIM800L_RST, OUTPUT);
-  digitalWrite(SIM800L_RST, HIGH);
-  */
-
-  /*// you want reset the sim800?
-  #ifdef RESET_SIM800
-    digitalWrite(SIM800L_RST, LOW);
-    delay(100);
-    digitalWrite(SIM800L_RST, HIGH); 
-    delay(3000); // wait for restart
-  #endif
-  */
-  
   // now lets switch on the SIM800 modem
   ladln(F("Initalising GSM\r\nmodem..."));
-  /*digitalWrite(SIM800L_POWER, HIGH);
-
-  //Begin serial communication with Arduino and SIM800L
-  gGSMModemBus->begin(BAUDRATE_SMS_CALL);
-  while (!gGSMModemBus) {
-    ; // wait for connection object port
-  }
-  */
-
-  ladln("Wait for GSM modem...", false);
- /* unsigned long timeout = 10000;
-  if (waitForGSMModem(timeout) == true) {
-    gDeviceState->set(EDeviceState::modem, ON);
-    ladln("GSM modem is ready");
-
-    if (!sim800l.begin(*gGSMModemBus)) { // Adafruit_FONA is starting now some standard routines on the GSM modem
-      ladln(F("Couldn't find\r\nGSM SIM800L"));
-      // TODO ERROR
-      while (1); // stay here
-    }
-
-    ladln("Connecting GSM\r\nnetwork...");
-    if (gDeviceState->get(EDeviceState::modem) == true && waitForNetwork(WaitForGSMNetWorkTimeout)) { // wait upto 30 seconds
-      gDeviceState->set(EDeviceState::network, ON);
-      ladln("GSM Network\r\nconnected.");
-      updateSignalStrengthIfNeeded();
-
-      if (sim800l.enableNetworkTimeSync(true) == true) {
-        Serial.println(F("Enabled GSM network time"));
-        gDeviceState->set(EDeviceState::networkTime, ON);
-      } else {
-        Serial.println(F("Failed to enable Network Time"));
-        // TODO ERROR
-      }
-    } else {
-      ladln("GSM Network\r\nnot available.");
-      // TODO ERROR
-    }
-  } else {
-    // TODO ERROR
-    ladln("GSM modem can\r\nnot be activated!");
-  }
-  */
+  GSMModemInfo modemInfo = GSMModemInfo(); // we are using the defaults
+  gModem = new GSMModem(&Serial1, modemInfo);
+  
 
   // connecting Wifi
   delay(1000); // when we try to connect WiFi directly after having a GSM network, often we have not enough amps available on USB
