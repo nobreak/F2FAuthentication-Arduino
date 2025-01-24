@@ -44,7 +44,7 @@ String DeviceState::getDescription() {
         } else {
           result += "OFF";
         }  
-        result += "\r\n";
+        result += "\\r\\n";
         break;
       case EDeviceState::modem:
         result += "GSM Modem: ";
@@ -53,7 +53,7 @@ String DeviceState::getDescription() {
         } else {
           result += "OFF";
         }  
-        result += "\r\n";
+        result += "\\r\\n";
         break;
       case EDeviceState::network:
         result += "GSM Network: ";
@@ -62,7 +62,7 @@ String DeviceState::getDescription() {
         } else {
           result += "NOT Connected";
         }  
-        result += "\r\n";
+        result += "\\r\\n";
         break;
       case EDeviceState::networkTime:
         result += "GSM Network Time: ";
@@ -71,7 +71,7 @@ String DeviceState::getDescription() {
         } else {
           result += "NOT Enabled";
         }  
-        result += "\r\n";
+        result += "\\r\\n";
         break;
       case EDeviceState::wifi:
         result += "Wifi: ";
@@ -80,7 +80,7 @@ String DeviceState::getDescription() {
         } else {
           result += "NOT Connected";
         }  
-        result += "\r\n";
+        result += "\\r\\n";
         break;
       default: {
         result += "Unknown state: ";
@@ -89,7 +89,7 @@ String DeviceState::getDescription() {
         } else {
           result += "OFF";
         }  
-        result += "\r\n";
+        result += "\\r\\n";
       }
     } // switch
   } // for loop

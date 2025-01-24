@@ -214,6 +214,15 @@ void setup() {
 
   // removing all texts, before handing over to main llop
   ladln(""); 
+
+  // send information to slack that device has startet
+
+  String slackMessage = "══════════\\r\\nF2FA phone has started with follwoing states:\\r\\n──────────\\r\\n";
+  slackMessage += gDeviceState->getDescription();
+  slackMessage += "══════════";
+  ladln(slackMessage, false);
+  gSlack->sendMessage(slackMessage, false);
+
   
   // Set up the FONA to send a +CMTI notification
   // when an SMS is received
