@@ -2,13 +2,13 @@
 #define icons_h
 
 const unsigned char PROGMEM heartIcon[] = {
-  B00110110,
-  B01111111,
-  B01111111,
-  B01111111,
-  B00111110,
-  B00011100,
-  B00001000
+  0b00110110,
+  0b01111111,
+  0b01111111,
+  0b01111111,
+  0b00111110,
+  0b00011100,
+  0b00001000
 };
 
 
@@ -19,8 +19,8 @@ const unsigned char PROGMEM iconSgnStrengthPoor[] = {
   0x0,
   0x0,
   0x0,
-  B01000000,
-  B01000000
+  0b01000000,
+  0b01000000
 };
 
 
