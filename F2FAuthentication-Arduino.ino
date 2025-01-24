@@ -1,16 +1,15 @@
 
 #include "globals.h"
-#include "GSMModem.h"
-#include "Display.h"
 
 
 
 /** 
 * Serial bus setup for communication to IDE and SIM800L
 **/
-HardwareSerial *gGSMModemBus = &Serial1;
+//HardwareSerial *gGSMModemBus = &Serial1;
 // Later we want to cast the gGSMModemBus object to Adafruit_FONA to have some nice GSM AT commands integrated in functions
-Adafruit_FONA sim800l = Adafruit_FONA(SIM800L_PWRKEY); 
+//Adafruit_FONA sim800l = Adafruit_FONA(SIM800L_PWRKEY); 
+GSMModem* gModem = NULL; 
 
 
 /**
@@ -136,32 +135,38 @@ void setup() {
   pinMode(LED_BLUE, OUTPUT); 
   digitalWrite(LED_BLUE, HIGH);
 
-  // thats the pin to activate the SIM800
+  GSMModemInfo modemInfo = GSMModemInfo(); // we are using the defaults
+  gModem = new GSMModem(&Serial1, modemInfo);
+
+  /*// thats the pin to activate the SIM800
   pinMode(SIM800L_POWER, OUTPUT); 
   // Keep reset PIN high, thats required in case you want to reset the sim800, you have to set to low
   pinMode(SIM800L_RST, OUTPUT);
   digitalWrite(SIM800L_RST, HIGH);
-  
-  // you want reset the sim800?
+  */
+
+  /*// you want reset the sim800?
   #ifdef RESET_SIM800
     digitalWrite(SIM800L_RST, LOW);
     delay(100);
     digitalWrite(SIM800L_RST, HIGH); 
     delay(3000); // wait for restart
   #endif
+  */
   
   // now lets switch on the SIM800 modem
   ladln(F("Initalising GSM\r\nmodem..."));
-  digitalWrite(SIM800L_POWER, HIGH);
+  /*digitalWrite(SIM800L_POWER, HIGH);
 
   //Begin serial communication with Arduino and SIM800L
   gGSMModemBus->begin(BAUDRATE_SMS_CALL);
   while (!gGSMModemBus) {
     ; // wait for connection object port
   }
-  
+  */
+
   ladln("Wait for GSM modem...", false);
-  unsigned long timeout = 10000;
+ /* unsigned long timeout = 10000;
   if (waitForGSMModem(timeout) == true) {
     gDeviceState->set(EDeviceState::modem, ON);
     ladln("GSM modem is ready");
@@ -193,7 +198,8 @@ void setup() {
     // TODO ERROR
     ladln("GSM modem can\r\nnot be activated!");
   }
-  
+  */
+
   // connecting Wifi
   delay(1000); // when we try to connect WiFi directly after having a GSM network, often we have not enough amps available on USB
   WiFi.begin(ssid, password);
@@ -223,14 +229,6 @@ void setup() {
   ladln(slackMessage, false);
   gSlack->sendMessage(slackMessage, false);
 
-  
-  // Set up the FONA to send a +CMTI notification
-  // when an SMS is received
-  /*gGSMModemBus->print("AT+CNETLIGHT=1\r\n"); 
-  gGSMModemBus->print("AT+CNMI=2,1\r\n");
-  gGSMModemBus->print("AT\r\n");
-  */
-
 }
 
 void forwardFromUart()
@@ -251,7 +249,7 @@ void forwardFromUart()
 }
 
 void updateSignalStrengthIfNeeded(){
-  SignalStrength sgnStrngth = getSignalStrength();
+  SignalStrength sgnStrngth = gModem->getSignalStrength();
 
   if (sgnStrngth != gLastSignalStrength) {
     Serial.print(F("New Signal Strength")); Serial.println(sgnStrngth);
@@ -263,7 +261,7 @@ void updateSignalStrengthIfNeeded(){
 
 void updateCurrentTime(){
     char timeBuffer[23];
-    sim800l.getTime(timeBuffer, 23);  // getting the time via FONA from GSM modem
+    gModem->getTime(timeBuffer, 23);  // getting the time via FONA from GSM modem
     Serial.print(F("Time = ")); Serial.println(timeBuffer);
 
     // if modem is not fully initalized, we're getting not valid date starting at 04/01/01, we ignore this
@@ -279,7 +277,7 @@ void updateCurrentTime(){
 
 
 void forwardAndDeleteSMSIfNeeded() {
-  int8_t countSms = sim800l.getNumSMS();
+  int8_t countSms = gModem->getCountSMS();
   gDisplay->updateIconMessage(countSms);
 
   if (countSms > 0) {
@@ -292,7 +290,7 @@ void forwardAndDeleteSMSIfNeeded() {
 
       for ( ; smsn <= countSms; smsn++) {
         Serial.print(F("\n\rReading SMS #")); Serial.println(smsn);
-        if (!sim800l.readSMS(smsn, smsTextBuffer, 250, &smslen)) {  // pass in buffer and max len!
+        if (!gModem->readSMS(smsn, smsTextBuffer, 250, &smslen)) {  // pass in buffer and max len!
           Serial.println(F("SMS Read Failed!"));
           break;
         }
@@ -309,11 +307,11 @@ void forwardAndDeleteSMSIfNeeded() {
         Serial.println(smsTextBuffer);
         Serial.println(F("*****"));
 
-        String slackMessange = "Received New SMS: '" + String(smsTextBuffer) + "'"; 
+        String slackMessange = "Received new SMS:\r\n'" + String(smsTextBuffer) + "'"; 
         if (gSlack->sendMessage(String(slackMessange)) == true ) {
           // delete SMS
           Serial.print(F("\n\rDeleting SMS #")); Serial.println(smsn);
-          if (sim800l.deleteSMS(smsn)) {
+          if (gModem->deleteSMS(smsn)) {
             Serial.println(F(" Successful deleted!"));
           } else {
             Serial.println(F("Couldn't delete"));
@@ -326,14 +324,6 @@ void forwardAndDeleteSMSIfNeeded() {
     } 
 }
 
-long prevMillis = 0;
-int interval = 1000;
-char sim800lNotificationBuffer[64];          //for notifications from the FONA
-char smsBuffer[250];
-String smsString = "";
-
-
-
 
 /**
 * Main Loop
@@ -345,8 +335,11 @@ void loop() {
   #else
     unsigned long currentMillis = millis();
 
+  // is modem is on ? 
+
+
   // get the signal strength and update the diplay if it has changed
-  if (gDeviceState->get(EDeviceState::network) == ON && currentMillis - gSignalStrengthPrevMillis >= gSignalStrengthInterval) {
+  if (currentMillis - gSignalStrengthPrevMillis >= gSignalStrengthInterval) {
     gSignalStrengthPrevMillis = currentMillis;
     updateSignalStrengthIfNeeded();
   }
@@ -365,89 +358,17 @@ void loop() {
     forwardAndDeleteSMSIfNeeded();
   }
 
-
-
-
-
-
-
-  // put your main code here, to run repeatedly:
-
-
-  char* bufPtr = sim800lNotificationBuffer;    //handy buffer pointer
-
-  if (sim800l.available()) {
-    int slot = 0; // this will be the slot number of the SMS
-    int charCount = 0;
-
-    // Read the notification into fonaInBuffer
-    do {
-      *bufPtr = sim800l.read();
-      SerialIDE.write(*bufPtr);
-      delay(1);
-    } while ((*bufPtr++ != '\n') && (sim800l.available()) && (++charCount < (sizeof(sim800lNotificationBuffer)-1)));
-    
-    //Add a terminal NULL to the notification string
-    *bufPtr = 0;
-
-    //Scan the notification string for an SMS received notification.
-    //  If it's an SMS message, we'll get the slot number in 'slot'
-    if (1 == sscanf(sim800lNotificationBuffer, "+CMTI: \"SM\",%d", &slot)) {
-      SerialIDE.print("slot: "); SerialIDE.println(slot);
-      
-      char callerIDbuffer[32];  //we'll store the SMS sender number in here
-      
-      // Retrieve SMS sender address/phone number.
-      if (!sim800l.getSMSSender(slot, callerIDbuffer, 31)) {
-        SerialIDE.println("Didn't find SMS message in slot!");
-      }
-      SerialIDE.print(F("FROM: ")); SerialIDE.println(callerIDbuffer);
-
-      // Retrieve SMS value.
-      uint16_t smslen;
-      // Pass in buffer and max len!
-      if (sim800l.readSMS(slot, smsBuffer, 250, &smslen)) {
-        smsString = String(smsBuffer);
-        SerialIDE.println(smsString);
-      }
-
-      if (smsString == "RELAY ON") {
-        SerialIDE.println("Relay is activated.");
-        delay(100);
-        // Send SMS for status
-        // if (!sim800l.sendSMS(callerIDbuffer, "Relay is activated.")) {
-        //   SerialIDE.println(F("Failed"));
-        // } else {
-        //   SerialIDE.println(F("Sent!"));
-        // }
-      }
-      else if (smsString == "RELAY OFF") {
-        SerialIDE.println("Relay is deactivated.");
-        // digitalWrite(RELAY, LOW);
-        // delay(100);
-        // // Send SMS for status
-        // if (!sim800l.sendSMS(callerIDbuffer, "Relay is deactivated.")) {
-        //   SerialIDE.println(F("Failed"));
-        // } else {
-        //   SerialIDE.println(F("Sent!"));
-        // }
-      }
-
-      if (sim800l.deleteSMS(slot)) {
-        SerialIDE.println(F("OK!"));
-      }
-      else {
-        SerialIDE.print(F("Couldn't delete SMS in slot ")); SerialIDE.println(slot);
-        sim800l.print(F("AT+CMGD=?\r\n"));
-      }
+  /*if (gGSMNetworkConnected == false) {
+    ladln("Connecting GSM network ...");
+    if (waitForNetwork(30000)) { // wait upto 60 seconds
+      gGSMNetworkTimeEnabled = true;
+      ladln("GSM Network connected.");
+      updateSignalStrengthIfNeeded();
+    } else {
+      ladln("GSM Network not available.");
     }
+  }*/
 
-
-    forwardFromUart();
-
-    
-  
-  }
   #endif
   
 

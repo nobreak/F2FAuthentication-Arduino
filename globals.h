@@ -2,13 +2,13 @@
 #define globals_h
 
 #include <Arduino.h>
-#include <Adafruit_FONA.h>
 #include <WiFi.h>
 #include "GSMModem.h"
 #include "environment_secrets.h"
 #include "slack.h"
 #include "deviceState.h"
 #include "Display.h"
+
 
 
 //#define DEBUG
@@ -22,15 +22,17 @@
 * HARDWARE SETUP
 **/
 // that are the PINS which are hardwired on TTGO to realize the hardware serial bus between ESP32 and SIM800L
-#define SIM800L_TX 27 
+/*#define SIM800L_TX 27 
 #define SIM800L_RX 26
 #define SIM800L_RST 5
 #define SIM800L_PWRKEY 4
 #define SIM800L_POWER 23
+*/
 
-#define BAUDRATE_SMS_CALL 9600
-#define BAUDRATE_GPRS 57600
-#define BAUDRATE_IOT_FIRMWAREUPDATE 115200
+// // choose one of them
+// #define BAUDRATE_SMS_CALL 9600
+// #define BAUDRATE_GPRS 57600
+// #define BAUDRATE_IOT_FIRMWAREUPDATE 115200
 
 #define LED_BLUE  13 // pin of blue LED of the ESP32
 

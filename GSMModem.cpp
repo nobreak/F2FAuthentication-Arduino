@@ -1,18 +1,91 @@
-
+#include <Arduino.h>
 #include "GSMModem.h"
 
 
+GSMModem::GSMModem(HardwareSerial* hardwareSerialBus, GSMModemInfo modemInfo) : hwSBSIM800L(modemInfo.pinPwrKey) {
+  this->hardwareSerialBus = hardwareSerialBus;
+  //this->hwSBSIM800L = Adafruit_FONA(modemInfo.pinPwrKey);
+  this->info = modemInfo;
 
-bool waitForGSMModem(unsigned long timeout = 10000) {
+  // thats the pin to activate the SIM800
+  pinMode(info.pinPower, OUTPUT); 
+  // Keep reset PIN high, thats required in case you want to reset the sim800, you have to set to low
+  pinMode(info.pinRST, OUTPUT);
+  digitalWrite(info.pinRST, HIGH);
+
+
+  // you want reset the sim800?
+  #ifdef RESET_SIM800
+    digitalWrite(pinRST, LOW);
+    delay(100);
+    digitalWrite(pinRST, HIGH); 
+    delay(3000); // wait for restart
+  #endif
+
+  // now lets switch on the SIM800 modem
+  digitalWrite(info.pinPower, HIGH);
+
+  //Begin serial communication with Arduino and SIM800L
+  hardwareSerialBus->begin(info.serialBaudrate);
+  while (!hardwareSerialBus) {
+    ; // wait for connection object port
+  }
+
+  unsigned long timeout = 10000;
+  if (waitForGSMModem(timeout) == true) {
+    //gDeviceState->set(EDeviceState::modem, ON);
+    //ladln("GSM modem is ready");
+
+    if (!this->hwSBSIM800L.begin(*hardwareSerialBus)) { // Adafruit_FONA is starting now some standard routines on the GSM modem
+      //ladln(F("Couldn't find\r\nGSM SIM800L"));
+      // TODO ERROR
+      while (1); // stay here
+    }
+
+    //ladln("Connecting GSM\r\nnetwork...");
+    // modem is on, lets try to cinnect GSM network
+    if (waitForNetwork(WaitForGSMNetWorkTimeout)) { // wait upto 30 seconds
+      //gDeviceState->set(EDeviceState::network, ON);
+      //ladln("GSM Network\r\nconnected.");
+      //updateSignalStrengthIfNeeded();
+
+      // network is available, so let's activate the network time sync, so that we later could show the current time
+      if (this->hwSBSIM800L.enableNetworkTimeSync(true) == true) {
+        Serial.println(F("Enabled GSM network time"));
+        //gDeviceState->set(EDeviceState::networkTime, ON);
+      } else {
+        Serial.println(F("Failed to enable Network Time"));
+        // TODO ERROR
+      }
+    } else {
+      //ladln("GSM Network\r\nnot available.");
+      // TODO ERROR
+    }
+  } else {
+    // TODO ERROR
+    //ladln("GSM modem can\r\nnot be activated!");
+  }
+}
+
+bool GSMModem::setup() {
+
+  
+
+  return true; 
+}
+
+
+
+bool GSMModem::waitForGSMModem(unsigned long timeout = 10000) {
   unsigned long start = millis();
   String response = "";
   
   while (millis() - start < timeout) {
-    gGSMModemBus->println("AT");
+    hardwareSerialBus->println("AT");
     SerialIDE.println("... still WAIT");
     delay(100);
     
-    while (gGSMModemBus->available()) {
+    while (hardwareSerialBus->available()) {
       // was hard to find a running solution to read on the hardware serial bus, because the indexOf function can not find the search string if you read char by char on bus
       // here are now 3 solutions they will work
 
@@ -34,7 +107,7 @@ bool waitForGSMModem(unsigned long timeout = 10000) {
 
 
       // 3. read char by char, but ignore Null terminators 
-      char c = gGSMModemBus->read();
+      char c = hardwareSerialBus->read();
       if (c != '\0') {
         response += c;
         
@@ -52,7 +125,7 @@ bool waitForGSMModem(unsigned long timeout = 10000) {
   return false; // Timeout erreicht, Modem nicht bereit
 }
 
-bool isGSMModemOnline() {
+bool GSMModem::isGSMModemOnline() {
   bool result = false;
   if (waitForGSMModem(100) == true) {
     // ok modem still is running
@@ -66,7 +139,7 @@ bool isGSMModemOnline() {
 }
 
 
-bool waitForNetwork(unsigned long timeout) {
+bool GSMModem::waitForNetwork(unsigned long timeout) {
   unsigned long start = millis();
   while (millis() - start < timeout) {
     if (isNetworkConnected() == true) {
@@ -88,18 +161,18 @@ bool waitForNetwork(unsigned long timeout) {
 }
 
 
-bool isNetworkConnected() {
+bool GSMModem::isNetworkConnected() {
   bool result = false;
 
-  if (sim800l.getNetworkStatus() == 1) {
+  if (hwSBSIM800L.getNetworkStatus() == 1) {
     result = true;
   }
   return result;
 }
 
 
-int8_t getSignalStrengthDbm() {
-  uint8_t rssi = sim800l.getRSSI();
+int8_t GSMModem::getSignalStrengthDbm() {
+  uint8_t rssi = hwSBSIM800L.getRSSI();
   int8_t dbm = -115;
 
   Serial.print(F("RSSI = ")); Serial.print(rssi); Serial.print(": ");
@@ -119,7 +192,7 @@ int8_t getSignalStrengthDbm() {
 }
 
 
-SignalStrength getSignalStrength() {
+SignalStrength GSMModem::getSignalStrength() {
   int8_t dbm = getSignalStrengthDbm();
 
   // different meanings exists here: 
@@ -145,6 +218,21 @@ SignalStrength getSignalStrength() {
   return strength;
 }
 
+
+int8_t GSMModem::getCountSMS() {
+  return this->hwSBSIM800L.getNumSMS();
+}
+
+bool GSMModem::readSMS(uint8_t messageIndex, char *smsbuff, uint16_t max, uint16_t *readsize) {
+  return this->hwSBSIM800L.readSMS(messageIndex, smsbuff, max, readsize);
+}
+
+bool GSMModem::getTime(char* timeBuffer, uint16_t maxLength) {
+  return this->hwSBSIM800L.getTime(timeBuffer, maxLength);
+}
+bool GSMModem::deleteSMS(uint8_t messageIndex) {
+  return this->hwSBSIM800L.deleteSMS(messageIndex);
+}
 
 
   
