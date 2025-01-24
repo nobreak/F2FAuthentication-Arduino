@@ -24,8 +24,9 @@ extern F2FADisplay* gDisplay;
 #define SCREEN_HEIGHT 32
 
 /**
-* Timer timeouts
+* Timings
 **/
 #define WaitForGSMNetWorkTimeout 30000 // 30 s
+#define ReadDelay 2000 // how long you need to read some message on display
 
 #endif

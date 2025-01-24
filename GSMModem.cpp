@@ -1,11 +1,22 @@
 #include <Arduino.h>
 #include "GSMModem.h"
 
+#define SerialIDE Serial0
+#define SENDEVENT(...) \
+    if (mDelegate) { \
+        mDelegate->onModemStatusChanged(__VA_ARGS__); \
+    }
 
-GSMModem::GSMModem(HardwareSerial* hardwareSerialBus, GSMModemInfo modemInfo) : hwSBSIM800L(modemInfo.pinPwrKey) {
+
+GSMModem::GSMModem(HardwareSerial* hardwareSerialBus, GSMModemInfo modemInfo, GSMModemDelegate* delegate) : hwSBSIM800L(modemInfo.pinPwrKey) {
+  this->resetAllStates();
   this->hardwareSerialBus = hardwareSerialBus;
-  //this->hwSBSIM800L = Adafruit_FONA(modemInfo.pinPwrKey);
   this->info = modemInfo;
+  this->setDelegate(delegate);
+}
+
+void GSMModem::setup() {
+  setState(initializing, true);
 
   // thats the pin to activate the SIM800
   pinMode(info.pinPower, OUTPUT); 
@@ -24,8 +35,7 @@ GSMModem::GSMModem(HardwareSerial* hardwareSerialBus, GSMModemInfo modemInfo) : 
 
   unsigned long timeout = 10000;
   if (waitForGSMModem(timeout) == true) {
-    //gDeviceState->set(EDeviceState::modem, ON);
-    //ladln("GSM modem is ready");
+    setState(modemOnline, true);
 
     if (!this->hwSBSIM800L.begin(*hardwareSerialBus)) { // Adafruit_FONA is starting now some standard routines on the GSM modem
       //ladln(F("Couldn't find\r\nGSM SIM800L"));
@@ -34,11 +44,9 @@ GSMModem::GSMModem(HardwareSerial* hardwareSerialBus, GSMModemInfo modemInfo) : 
     }
 
     //ladln("Connecting GSM\r\nnetwork...");
-    // modem is on, lets try to cinnect GSM network
+    // modem is on, lets try to connect GSM network
     if (waitForNetwork(WaitForGSMNetWorkTimeout)) { // wait upto 30 seconds
-      //gDeviceState->set(EDeviceState::network, ON);
-      //ladln("GSM Network\r\nconnected.");
-      //updateSignalStrengthIfNeeded();
+      setState(networkConnected, true);
 
       // network is available, so let's activate the network time sync, so that we later could show the current time
       if (this->hwSBSIM800L.enableNetworkTimeSync(true) == true) {
@@ -59,6 +67,41 @@ GSMModem::GSMModem(HardwareSerial* hardwareSerialBus, GSMModemInfo modemInfo) : 
 }
 
 
+void GSMModem::setDelegate(GSMModemDelegate* delegate) {
+  this->mDelegate = delegate;
+  SerialIDE.println("delegate was set");
+}
+
+
+void GSMModem::setState(EGSMModemState state, bool value) {
+  if (value == true) {
+    bitSet(this->mState, state);
+  } else {
+    bitClear(this->mState, state);
+  }
+  SerialIDE.println("STATE HAS CHANGED, EVENT WILL BE SEND ...");
+  if (mDelegate) { 
+        SerialIDE.println("Delegate is there");
+        mDelegate->onModemStatusChanged(state, value); 
+  } else {
+    SerialIDE.println("ERROR: no delegate!");
+  }
+  //SENDEVENT(state, value)
+}
+
+bool GSMModem::getState(EGSMModemState state) {
+  bool result = false;
+  if (bitRead(this->mState, state)) {
+    result = true;
+  }
+  return result; 
+}
+
+void GSMModem::resetAllStates() {
+  for (int8_t s=0; s < countModemStates; s++) {
+    bitClear(this->mState, s);
+  }
+}
 
 bool GSMModem::waitForGSMModem(unsigned long timeout = 10000) {
   unsigned long start = millis();

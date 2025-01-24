@@ -4,13 +4,32 @@
 
 
 #include <Adafruit_FONA.h>
-#include "globals.h"
 
 
 // choose one of them
 #define BAUDRATE_SMS_CALL 9600
 #define BAUDRATE_GPRS 57600
 #define BAUDRATE_IOT_FIRMWAREUPDATE 115200
+
+#define WaitForGSMNetWorkTimeout 30000
+
+
+
+
+
+enum EGSMModemState : uint8_t {
+  initializing = 0,
+  modemOnline,
+  networkConnected,
+  networkTimeEnabled,
+  countModemStates
+};
+
+class GSMModemDelegate {
+public:
+    virtual void onModemStatusChanged(EGSMModemState changedState, bool newState) = 0;
+    virtual ~GSMModemDelegate() {}  // Virtueller Destruktor
+};
 
 
 enum SignalStrength {
@@ -33,8 +52,9 @@ struct GSMModemInfo {
 
 class GSMModem {
   public:
-    GSMModem(HardwareSerial* hardwareSerialBus, GSMModemInfo modemInfo);
+    GSMModem(HardwareSerial* hardwareSerialBus, GSMModemInfo modemInfo, GSMModemDelegate* delegate = NULL);
 
+    void setup();
     int8_t getCountSMS();
     bool readSMS(uint8_t messageIndex, char *smsbuff, uint16_t max, uint16_t *readsize);
     bool getTime(char* timeBuffer, uint16_t maxLength);
@@ -45,6 +65,9 @@ class GSMModem {
     uint8_t getIMEI(char *imei);
     uint8_t getSMSStorageStatus(); // beta
     uint8_t unlockSIM(char *pin); // beta
+    bool getState(EGSMModemState state);
+
+    void setDelegate(GSMModemDelegate* delegate);
 
 
   private: 
@@ -53,9 +76,16 @@ class GSMModem {
     int8_t getSignalStrengthDbm();
     bool isGSMModemOnline();
 
-    HardwareSerial* hardwareSerialBus;
+    HardwareSerial* hardwareSerialBus = NULL;
     GSMModemInfo info;
     Adafruit_FONA hwSBSIM800L; 
+
+    void setState(EGSMModemState state, bool value);
+    
+    void resetAllStates();
+    byte mState; // modem state bitmask
+    GSMModemDelegate* mDelegate = NULL;
+
 };
 
 #endif 

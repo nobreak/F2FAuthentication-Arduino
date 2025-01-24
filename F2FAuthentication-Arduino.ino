@@ -2,32 +2,60 @@
 #include "globals.h"
 
 
+// some forward declarations
+void ladln(const String &text, bool toDisplay = true);
+void updateSignalStrengthIfNeeded();
 
-/** 
-* Serial bus setup for communication to IDE and SIM800L
-**/
-//HardwareSerial *gGSMModemBus = &Serial1;
-// Later we want to cast the gGSMModemBus object to Adafruit_FONA to have some nice GSM AT commands integrated in functions
-//Adafruit_FONA sim800l = Adafruit_FONA(SIM800L_PWRKEY); 
-GSMModem* gModem = NULL; 
+/****
+* Necessary objects
+*****/
+GSMModem* gModem = NULL;  // Serial bus setup for communication to IDE and SIM800L
+DeviceState* gDeviceState = new DeviceState(); // some states about the device
+F2FADisplay* gDisplay = NULL; // ou OLED display
+
+class F2FAEventHandler : public GSMModemDelegate {
+  public:
+    void onModemStatusChanged(EGSMModemState changedState, bool newState) override {
+        // Hier implementieren Sie die Ereignisbehandlung
+        SerialIDE.print("STATUS CHANGED FOR"); SerialIDE.println((int)changedState);
+
+        switch (changedState) {
+          case modemOnline:
+            if (newState == true ) {
+              gDeviceState->set(EDeviceState::modem, ON);
+              ladln("Modem is ready");
+              if (gModem->getState(initializing) == true) {
+                delay(ReadDelay);
+                ladln("Connecting mobile\r\nnetwork...");
+              }
+            }
+            break;
+          case networkConnected:
+            if (newState == true) {
+              gDeviceState->set(EDeviceState::network, ON);
+              ladln("GSM Network\r\nconnected.");
+              updateSignalStrengthIfNeeded();
+            }
+            break;
+
+        }
+    }
+};
+
+  // modemOnline,
+  // networkConnected,
+  // networkTimeEnabled,
+  // countModemStates
 
 
-/**
-* Display
-**/
-F2FADisplay* gDisplay = NULL; 
+F2FAEventHandler gEventHandler;
+
 
 
 /**
 * Constants maybe necessary
 **/
 char simPIN[]   = SIM_PIN; // SIM card PIN code, if any
-
-/**
-* Special Runtime feature toggles
-**/
-// if there is the need to reset the modem
-//#define RESET_SIM800 
 
 
 /**
@@ -44,10 +72,7 @@ const long gTimeInterval = 5000; // Interval 5 seconds
 unsigned long gSMSPollPrevMillis = 0;
 const long gSMSPollInterval = 10000; // Interval 5 seconds
 
-/**
-* Some runtime status information
-**/
-DeviceState* gDeviceState = new DeviceState();
+
 
 /**
 * Slack and Wifi
@@ -58,7 +83,7 @@ Slack* gSlack = new Slack(SLACK_WEBHOOK_URL);
 
 
 
-void ladln(const String &text, bool toDisplay = true) {
+void ladln(const String &text, bool toDisplay) {
   Serial.println(text);
 
   if (toDisplay) {
@@ -123,13 +148,13 @@ void setup() {
     ; // wait for connection object port
   }
 
-
   // next we need a display
   gDisplay = new F2FADisplay(SCREEN_WIDTH, SCREEN_HEIGHT, 0x3C);  // check the adresse with your device
 
   if (gDisplay != NULL || gDisplay->isConnected == true) {
     gDeviceState->set(EDeviceState::display, ON);
-    ladln(F("#### F2FA on ESP32 with GSM SIM800L ####"), false);
+    ladln(F("#### F2FA Phone - v0.1 ####"));
+    delay(ReadDelay); 
   } else {
     // it's an error, ok, but we still can proceed without display
   }
@@ -140,11 +165,11 @@ void setup() {
 
 
   // now lets switch on the SIM800 modem
-  ladln(F("Initalising GSM\r\nmodem..."));
+  ladln(F("Initializing\r\nF2FA Phone..."));
   GSMModemInfo modemInfo = GSMModemInfo(); // we are using the defaults
-  gModem = new GSMModem(&Serial1, modemInfo);
+  gModem = new GSMModem(&Serial1, modemInfo, &gEventHandler);
+  gModem->setup();
   
-
   // connecting Wifi
   delay(1000); // when we try to connect WiFi directly after having a GSM network, often we have not enough amps available on USB
   WiFi.begin(ssid, password);
@@ -172,26 +197,11 @@ void setup() {
   slackMessage += gDeviceState->getDescription();
   slackMessage += "══════════";
   ladln(slackMessage, false);
-  gSlack->sendMessage(slackMessage, false);
+  //gSlack->sendMessage(slackMessage, false);
 
 }
 
-// void forwardFromUart()
-// {
-//   delay(500);
-//   while (SerialIDE.available()) 
-//   {
-//     //SerialIDE.print("Typed by User on MC Serial: "); 
-//     SerialIDE.write(SerialIDE.read()); 
-//     SerialIDE.println("");
-//      sim800l.write(SerialIDE.read());//Forward what Serial received to Software Serial Port
-//   }
-//   while(sim800l.available()) 
-//   {
-//     //SerialIDE.print("Coming from SIM800L: ");
-//     SerialIDE.write(sim800l.read());//Forward what Software Serial received to Serial Port
-//   }
-// }
+
 
 void updateSignalStrengthIfNeeded(){
   SignalStrength sgnStrngth = gModem->getSignalStrength();
