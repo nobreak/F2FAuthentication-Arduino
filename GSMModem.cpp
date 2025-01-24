@@ -13,15 +13,6 @@ GSMModem::GSMModem(HardwareSerial* hardwareSerialBus, GSMModemInfo modemInfo) : 
   pinMode(info.pinRST, OUTPUT);
   digitalWrite(info.pinRST, HIGH);
 
-
-  // you want reset the sim800?
-  #ifdef RESET_SIM800
-    digitalWrite(pinRST, LOW);
-    delay(100);
-    digitalWrite(pinRST, HIGH); 
-    delay(3000); // wait for restart
-  #endif
-
   // now lets switch on the SIM800 modem
   digitalWrite(info.pinPower, HIGH);
 
