@@ -43,15 +43,13 @@ void GSMModem::setup() {
       while (1); // stay here
     }
 
-    //ladln("Connecting GSM\r\nnetwork...");
     // modem is on, lets try to connect GSM network
     if (waitForNetwork(WaitForGSMNetWorkTimeout)) { // wait upto 30 seconds
       setState(networkConnected, true);
 
       // network is available, so let's activate the network time sync, so that we later could show the current time
       if (this->hwSBSIM800L.enableNetworkTimeSync(true) == true) {
-        Serial.println(F("Enabled GSM network time"));
-        //gDeviceState->set(EDeviceState::networkTime, ON);
+        setState(networkTimeEnabled, true);
       } else {
         Serial.println(F("Failed to enable Network Time"));
         // TODO ERROR
@@ -74,16 +72,20 @@ void GSMModem::setDelegate(GSMModemDelegate* delegate) {
 
 
 void GSMModem::setState(EGSMModemState state, bool value) {
+  bool oldValue = getState(state);
+
   if (value == true) {
     bitSet(this->mState, state);
   } else {
     bitClear(this->mState, state);
   }
-  SerialIDE.println("STATE HAS CHANGED, EVENT WILL BE SEND ...");
-  if (mDelegate) { 
-        SerialIDE.println("Delegate is there");
-        mDelegate->onModemStatusChanged(state, value); 
+  
+  if (mDelegate) {
+    if (oldValue != value) {
+      mDelegate->onModemStatusChanged(state, value); 
+    }
   } else {
+    // TODO ERROR
     SerialIDE.println("ERROR: no delegate!");
   }
   //SENDEVENT(state, value)

@@ -37,6 +37,11 @@ class F2FAEventHandler : public GSMModemDelegate {
               updateSignalStrengthIfNeeded();
             }
             break;
+          case networkTimeEnabled:
+            if (newState == true) {
+              ladln(F("Enabled GSM network time"), false);
+              gDeviceState->set(EDeviceState::networkTime, ON);
+            }
 
         }
     }
