@@ -9,15 +9,12 @@
 #include "deviceState.h"
 #include "Display.h"
 
-//#define DEBUG
-#ifdef DEBUG
-  #include "debug.h"
-#endif
 
 /**
 * HARDWARE SETUP
 **/
 #define LED_BLUE  13 // pin of blue LED of the ESP32
+#define SerialIDE Serial0
 
 /**
 * Display

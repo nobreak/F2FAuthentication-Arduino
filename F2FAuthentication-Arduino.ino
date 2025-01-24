@@ -176,22 +176,22 @@ void setup() {
 
 }
 
-void forwardFromUart()
-{
-  delay(500);
-  while (SerialIDE.available()) 
-  {
-    //SerialIDE.print("Typed by User on MC Serial: "); 
-    SerialIDE.write(SerialIDE.read()); 
-    SerialIDE.println("");
-     sim800l.write(SerialIDE.read());//Forward what Serial received to Software Serial Port
-  }
-  while(sim800l.available()) 
-  {
-    //SerialIDE.print("Coming from SIM800L: ");
-    SerialIDE.write(sim800l.read());//Forward what Software Serial received to Serial Port
-  }
-}
+// void forwardFromUart()
+// {
+//   delay(500);
+//   while (SerialIDE.available()) 
+//   {
+//     //SerialIDE.print("Typed by User on MC Serial: "); 
+//     SerialIDE.write(SerialIDE.read()); 
+//     SerialIDE.println("");
+//      sim800l.write(SerialIDE.read());//Forward what Serial received to Software Serial Port
+//   }
+//   while(sim800l.available()) 
+//   {
+//     //SerialIDE.print("Coming from SIM800L: ");
+//     SerialIDE.write(sim800l.read());//Forward what Software Serial received to Serial Port
+//   }
+// }
 
 void updateSignalStrengthIfNeeded(){
   SignalStrength sgnStrngth = gModem->getSignalStrength();
@@ -275,13 +275,7 @@ void forwardAndDeleteSMSIfNeeded() {
 **/
 void loop() {
 
-  #ifdef DEBUG
-    debugLoop();
-  #else
-    unsigned long currentMillis = millis();
-
-  // is modem is on ? 
-
+   unsigned long currentMillis = millis();
 
   // get the signal strength and update the diplay if it has changed
   if (currentMillis - gSignalStrengthPrevMillis >= gSignalStrengthInterval) {
@@ -313,10 +307,6 @@ void loop() {
       ladln("GSM Network not available.");
     }
   }*/
-
-  #endif
-  
-
 }
 
 
