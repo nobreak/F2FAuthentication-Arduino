@@ -12,6 +12,7 @@
 #define BAUDRATE_IOT_FIRMWAREUPDATE 115200
 
 #define WaitForGSMNetWorkTimeout 30000
+#define WaitforGSMModemTimeout 10000
 
 
 
@@ -24,14 +25,23 @@ enum EGSMModemState : uint8_t {
 };
 
 enum EGSMModemError : uint8_t {
-  test = 0,
+  ErrorSerialBusSim800L = 10,
+  ErrorNetworkTime,
+  ErrorNetworkConnection,
+  ErrorGSMModem
+};
+
+enum EGSMErrorType : uint8_t {
+  Critical = 1,
+  Normal,
+  Warning
 };
 
 
 class GSMModemDelegate {
 public:
     virtual void onModemStatusChanged(EGSMModemState changedState, bool newState) = 0;
-    virtual void onModemError(EGSMModemError errorType, char* description) = 0;
+    virtual void onModemError(EGSMModemError errorCode, EGSMErrorType errorType, char* description) = 0;
     virtual ~GSMModemDelegate() {}  // Virtual Destructor
 };
 

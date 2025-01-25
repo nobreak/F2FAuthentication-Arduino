@@ -7,6 +7,10 @@
         mDelegate->onModemStatusChanged(__VA_ARGS__); \
     }
 
+#define HANDLEERROR(...) \
+  if (mDelegate) { \
+    mDelegate->onModemError(__VA_ARGS__); \
+  }
 
 GSMModem::GSMModem(HardwareSerial* hardwareSerialBus, GSMModemInfo modemInfo, GSMModemDelegate* delegate, char* simPIN) : hwSBSIM800L(modemInfo.pinPwrKey) {
   this->resetAllStates();
@@ -34,13 +38,11 @@ void GSMModem::setup() {
     ; // wait for connection object port
   }
 
-  unsigned long timeout = 10000;
-  if (waitForGSMModem(timeout) == true) {
+  if (waitForGSMModem(WaitforGSMModemTimeout) == true) {
     setState(modemOnline, true);
 
     if (!this->hwSBSIM800L.begin(*hardwareSerialBus)) { // Adafruit_FONA is starting now some standard routines on the GSM modem
-      //ladln(F("Couldn't find\r\nGSM SIM800L"));
-      // TODO ERROR
+      HANDLEERROR(ErrorSerialBusSim800L, Critical, "CRITICAL: FONA can not begin serial bus communication!" )
       while (1); // stay here
     }
 
@@ -52,16 +54,15 @@ void GSMModem::setup() {
       if (this->hwSBSIM800L.enableNetworkTimeSync(true) == true) {
         setState(networkTimeEnabled, true);
       } else {
-        Serial.println(F("Failed to enable Network Time"));
-        // TODO ERROR
+        HANDLEERROR(ErrorNetworkTime, Warning, "WARNING: Networktime can not be enabled!" )
       }
     } else {
-      //ladln("GSM Network\r\nnot available.");
-      // TODO ERROR
+      HANDLEERROR(ErrorNetworkConnection, Normal, "GSM Network not connectable, try to restart..." )
+      while (1); // stay here
     }
   } else {
-    // TODO ERROR
-    //ladln("GSM modem can\r\nnot be activated!");
+    HANDLEERROR(ErrorGSMModem, Critical, "CRITICAL: GSM modem can not be activated!" )
+    while (1); // stay here
   }
 
   setState(initializing, false);
@@ -165,6 +166,7 @@ bool GSMModem::isGSMModemOnline() {
     result = true;
   } else {
     // oh what happens, modem is not answering, is it off ? 
+    // todo error handling and state handling
     Serial.println("Modem is off, maybe to much power consuption?");
   }
   return result;
@@ -182,6 +184,7 @@ bool GSMModem::waitForNetwork(unsigned long timeout) {
       // was not able to connect network, maybe modem is offline ?
       if (isGSMModemOnline() == false) {
         // network connection is not possible, because modem is off
+         // todo error handling and state handling
         break;
       }
 

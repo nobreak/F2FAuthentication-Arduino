@@ -18,13 +18,24 @@ F2FADisplay* gDisplay = NULL; // our OLED display
 
 class F2FAEventHandler : public GSMModemDelegate {
   public:
-    void onModemError(EGSMModemError errorType, char* description) override {
+    void onModemError(EGSMModemError errorCode, EGSMErrorType errorType, char* description) override {
 
+      String errMsg = "Error(" + String((uint8_t)errorCode) + "): " + String(description);
+
+      if (errorType == Critical || errorType == Normal) {
+        ladln(errMsg);
+      } else {
+        ladln(errMsg, false);
+      }
+
+      switch (errorType) {
+        case ErrorNetworkConnection:
+          // todo: try to restart
+          break;
+      }
     }
 
     void onModemStatusChanged(EGSMModemState changedState, bool newState) override {
-        // Hier implementieren Sie die Ereignisbehandlung
-        SerialIDE.print("STATUS CHANGED FOR"); SerialIDE.println((int)changedState);
 
         switch (changedState) {
           case modemOnline:
@@ -88,6 +99,7 @@ Slack* gSlack = new Slack(SLACK_WEBHOOK_URL);
 
 
 void ladln(const String &text, bool toDisplay) {
+
   Serial.println(text);
 
   if (toDisplay) {
