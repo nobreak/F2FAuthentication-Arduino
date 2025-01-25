@@ -9,6 +9,7 @@
 #include "deviceState.h"
 #include "Display.h"
 
+#define F2FA_VERSION "v0.1"
 
 /**
 * HARDWARE SETUP

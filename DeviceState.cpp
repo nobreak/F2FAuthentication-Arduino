@@ -1,11 +1,40 @@
 #include "deviceState.h"
 
-
+#define MAX_ERROR_MESSAGES 20
 
 
 DeviceState::DeviceState() {
   this->resetAll();
+  this->errorMessages = new String[MAX_ERROR_MESSAGES];
 }
+
+
+bool DeviceState::addErrorMessage(String errMsg) {
+  bool result = false;
+  
+  if (errorMessages == NULL) {
+    this->errorMessages = new String[MAX_ERROR_MESSAGES];
+  }
+
+  if (currentCountErrorMessages < MAX_ERROR_MESSAGES ) {
+    errorMessages[currentCountErrorMessages] = errMsg;
+    currentCountErrorMessages++;
+    result = true;
+  }
+  return result;
+}
+
+bool DeviceState::deleteAllErrorMessages() {
+  bool result = false;
+  if (errorMessages != NULL) {
+    delete[] errorMessages;
+    errorMessages = NULL;
+    currentCountErrorMessages = 0;
+    result = true;
+  }
+  return result;
+}
+
 
 
 void DeviceState::set(EDeviceState stateID, bool value) {
@@ -93,6 +122,17 @@ String DeviceState::getDescription() {
       }
     } // switch
   } // for loop
+
+  if (errorMessages != NULL) {
+    result += "Errors:\\r\\n";
+    for (int e = 0; e < currentCountErrorMessages; e++) {
+      result += "  - ";
+      result += errorMessages[e];
+  
+      // add line break
+      result += "\\r\\n";
+    } // for loop
+  } // errMSg condition
 
   return result;
 }

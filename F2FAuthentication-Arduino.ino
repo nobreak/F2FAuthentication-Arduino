@@ -28,6 +28,8 @@ class F2FAEventHandler : public GSMModemDelegate {
         ladln(errMsg, false);
       }
 
+      gDeviceState->addErrorMessage(errMsg);
+
       switch (errorType) {
         case ErrorNetworkConnection:
           // todo: try to restart
@@ -164,7 +166,7 @@ void setup() {
 
   if (gDisplay != NULL || gDisplay->isConnected == true) {
     gDeviceState->set(EDeviceState::display, ON);
-    ladln(F("#### F2FA Phone - v0.1 ####"));
+    lad(F("#### F2FA Phone - ")); lad(F2FA_VERSION); ladln(" ####");
     delay(ReadDelay); 
   } else {
     // it's an error, ok, but we still can proceed without display
@@ -204,11 +206,11 @@ void setup() {
 
   // send information to slack that device has startet
 
-  String slackMessage = "══════════\\r\\nF2FA phone has started with follwoing states:\\r\\n──────────\\r\\n";
+  String slackMessage = "══════════\\r\\nF2FA Phone " + String(F2FA_VERSION) + " has started with following states:\\r\\n──────────\\r\\n";
   slackMessage += gDeviceState->getDescription();
   slackMessage += "══════════";
   ladln(slackMessage, false);
-  //gSlack->sendMessage(slackMessage, false);
+  gSlack->sendMessage(slackMessage, false);
 
 }
 

@@ -19,9 +19,6 @@ enum EDeviceState {
 
 class DeviceState {
 
-  private: 
-    byte mDeviceState;
-
   public:
     // Constructor    
     DeviceState();
@@ -29,6 +26,13 @@ class DeviceState {
     void set(EDeviceState stateID, bool value);
     bool get(EDeviceState stateID);
     String getDescription();
+    bool addErrorMessage(String errMsg);
+    bool deleteAllErrorMessages(); 
+
+  private: 
+    byte mDeviceState;
+    String* errorMessages = NULL;
+    uint8_t currentCountErrorMessages = 0;
 
 };
 
