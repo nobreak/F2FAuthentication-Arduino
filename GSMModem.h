@@ -15,8 +15,6 @@
 
 
 
-
-
 enum EGSMModemState : uint8_t {
   initializing = 0,
   modemOnline,
@@ -25,10 +23,16 @@ enum EGSMModemState : uint8_t {
   countModemStates
 };
 
+enum EGSMModemError : uint8_t {
+  test = 0,
+};
+
+
 class GSMModemDelegate {
 public:
     virtual void onModemStatusChanged(EGSMModemState changedState, bool newState) = 0;
-    virtual ~GSMModemDelegate() {}  // Virtueller Destruktor
+    virtual void onModemError(EGSMModemError errorType, char* description) = 0;
+    virtual ~GSMModemDelegate() {}  // Virtual Destructor
 };
 
 
@@ -52,7 +56,7 @@ struct GSMModemInfo {
 
 class GSMModem {
   public:
-    GSMModem(HardwareSerial* hardwareSerialBus, GSMModemInfo modemInfo, GSMModemDelegate* delegate = NULL);
+    GSMModem(HardwareSerial* hardwareSerialBus, GSMModemInfo modemInfo, GSMModemDelegate* delegate = NULL, char* simPIN = NULL);
 
     void setup();
     int8_t getCountSMS();
@@ -75,14 +79,13 @@ class GSMModem {
     bool waitForNetwork(unsigned long timeout);
     int8_t getSignalStrengthDbm();
     bool isGSMModemOnline();
+    void setState(EGSMModemState state, bool value);
+    void resetAllStates();
 
     HardwareSerial* hardwareSerialBus = NULL;
     GSMModemInfo info;
-    Adafruit_FONA hwSBSIM800L; 
-
-    void setState(EGSMModemState state, bool value);
-    
-    void resetAllStates();
+    Adafruit_FONA hwSBSIM800L;
+    char* simPIN = NULL;  
     byte mState; // modem state bitmask
     GSMModemDelegate* mDelegate = NULL;
 

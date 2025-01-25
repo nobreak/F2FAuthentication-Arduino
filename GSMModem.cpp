@@ -8,11 +8,12 @@
     }
 
 
-GSMModem::GSMModem(HardwareSerial* hardwareSerialBus, GSMModemInfo modemInfo, GSMModemDelegate* delegate) : hwSBSIM800L(modemInfo.pinPwrKey) {
+GSMModem::GSMModem(HardwareSerial* hardwareSerialBus, GSMModemInfo modemInfo, GSMModemDelegate* delegate, char* simPIN) : hwSBSIM800L(modemInfo.pinPwrKey) {
   this->resetAllStates();
   this->hardwareSerialBus = hardwareSerialBus;
   this->info = modemInfo;
   this->setDelegate(delegate);
+  this->simPIN = simPIN;
 }
 
 void GSMModem::setup() {
@@ -62,6 +63,8 @@ void GSMModem::setup() {
     // TODO ERROR
     //ladln("GSM modem can\r\nnot be activated!");
   }
+
+  setState(initializing, false);
 }
 
 
