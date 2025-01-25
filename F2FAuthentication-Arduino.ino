@@ -5,16 +5,23 @@
 // some forward declarations
 void ladln(const String &text, bool toDisplay = true);
 void updateSignalStrengthIfNeeded();
+//class F2FAEventHandler;
+void resetDevice();
 
 /****
 * Necessary objects
 *****/
 GSMModem* gModem = NULL;  // Serial bus setup for communication to IDE and SIM800L
 DeviceState* gDeviceState = new DeviceState(); // some states about the device
-F2FADisplay* gDisplay = NULL; // ou OLED display
+F2FADisplay* gDisplay = NULL; // our OLED display
+
 
 class F2FAEventHandler : public GSMModemDelegate {
   public:
+    void onModemError(EGSMModemError errorType, char* description) override {
+
+    }
+
     void onModemStatusChanged(EGSMModemState changedState, bool newState) override {
         // Hier implementieren Sie die Ereignisbehandlung
         SerialIDE.print("STATUS CHANGED FOR"); SerialIDE.println((int)changedState);
@@ -42,20 +49,17 @@ class F2FAEventHandler : public GSMModemDelegate {
               ladln(F("Enabled GSM network time"), false);
               gDeviceState->set(EDeviceState::networkTime, ON);
             }
-
+            break;
+          case initializing: 
+            if (newState == false) {
+              // nothing for now
+            } 
+            break;
         }
     }
 };
 
-  // modemOnline,
-  // networkConnected,
-  // networkTimeEnabled,
-  // countModemStates
-
-
-F2FAEventHandler gEventHandler;
-
-
+F2FAEventHandler gEventHandler; // is receiving status events from different components
 
 /**
 * Constants maybe necessary
@@ -130,11 +134,6 @@ void lad(int number, bool toDisplay = true) {
     gDisplay->print(number);
     gDisplay->display();
   }
-}
-
-void resetDevice() {
-  gModem->reset();
-  ESP.restart();  
 }
 
 
@@ -323,5 +322,17 @@ void loop() {
     }
   }*/
 }
+
+
+void resetDevice() {
+  gModem->reset();
+  ESP.restart();  
+}
+
+
+/*********/
+
+
+
 
 
