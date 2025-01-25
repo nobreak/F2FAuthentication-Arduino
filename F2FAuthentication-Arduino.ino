@@ -61,11 +61,6 @@ class F2FAEventHandler : public GSMModemDelegate {
 
 F2FAEventHandler gEventHandler; // is receiving status events from different components
 
-/**
-* Constants maybe necessary
-**/
-char simPIN[]   = SIM_PIN; // SIM card PIN code, if any
-
 
 /**
 * Loop timer
@@ -171,7 +166,7 @@ void setup() {
   // now lets switch on the SIM800 modem
   ladln(F("Initializing\r\nF2FA Phone..."));
   GSMModemInfo modemInfo = GSMModemInfo(); // we are using the defaults
-  gModem = new GSMModem(&Serial1, modemInfo, &gEventHandler);
+  gModem = new GSMModem(&Serial1, modemInfo, &gEventHandler, SIM_PIN);
   gModem->setup();
   
   // connecting Wifi
