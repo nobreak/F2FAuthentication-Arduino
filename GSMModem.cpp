@@ -33,7 +33,7 @@ void GSMModem::setup() {
   digitalWrite(info.pinPower, HIGH);
 
   //Begin serial communication with Arduino and SIM800L
-  hardwareSerialBus->begin(info.serialBaudrate);
+  hardwareSerialBus->begin(info.serialBaudrate, SERIAL_8N1, info.pinRX, info.pinTX);
   while (!hardwareSerialBus) {
     ; // wait for connection object port
   }

@@ -18,6 +18,25 @@
 #define SerialIDE Serial0
 
 /**
+* GSM Modem
+**/
+#ifdef TTGO_TCALL
+  #define MODEM_TX 27 
+  #define MODEM_RX 26 
+  #define MODEM_RST 5 
+  #define MODEM_PWR_KEY 4 
+  #define MODEM_POWER 23
+#else
+  #define MODEM_TX 17 
+  #define MODEM_RX 16 
+  // TODO TBD:
+  #define MODEM_RST 5 
+  #define MODEM_PWR_KEY 4
+  #define MODEM_POWER 23
+#endif
+
+
+/**
 * Display
 **/
 extern F2FADisplay* gDisplay;

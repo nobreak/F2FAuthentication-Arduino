@@ -180,6 +180,12 @@ void setup() {
   // now lets switch on the SIM800 modem
   ladln(F("Initializing\r\nF2FA Phone..."));
   GSMModemInfo modemInfo = GSMModemInfo(); // we are using the defaults
+  modemInfo.pinRX = MODEM_RX;
+  modemInfo.pinTX = MODEM_TX;
+  modemInfo.pinPower = MODEM_POWER;
+  modemInfo.pinRST = MODEM_RST;
+  modemInfo.pinPwrKey = MODEM_PWR_KEY;
+  modemInfo.serialBaudrate = BAUDRATE_SMS_CALL;
   gModem = new GSMModem(&Serial1, modemInfo, &gEventHandler, SIM_PIN);
   gModem->setup();
   

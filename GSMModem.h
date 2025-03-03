@@ -55,11 +55,19 @@ enum SignalStrength {
 };
 
 struct GSMModemInfo {
+  #ifdef TTGO_TCALL
   int8_t pinTX = 27; 
   int8_t pinRX = 26; 
   int8_t pinRST = 5; 
   int8_t pinPwrKey = 4; 
   int8_t pinPower = 23;
+  #else
+  int8_t pinTX = 17; 
+  int8_t pinRX = 16; 
+  int8_t pinRST = 5; // TODO ???
+  int8_t pinPwrKey = 4; // TODO ???
+  int8_t pinPower = 23; // TODO ???
+  #endif
   unsigned long serialBaudrate = BAUDRATE_SMS_CALL;
 };
 
