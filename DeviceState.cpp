@@ -1,11 +1,11 @@
 #include "deviceState.h"
 
-#define MAX_ERROR_MESSAGES 20
+#define MAX_COUNT_ERROR_MESSAGES 20
 
 
 DeviceState::DeviceState() {
   this->resetAll();
-  this->errorMessages = new String[MAX_ERROR_MESSAGES];
+  this->errorMessages = new String[MAX_COUNT_ERROR_MESSAGES];
   this->mSignalStrength = SignalStrength::zero;
 }
 
@@ -14,10 +14,10 @@ bool DeviceState::addErrorMessage(String errMsg) {
   bool result = false;
   
   if (errorMessages == NULL) {
-    this->errorMessages = new String[MAX_ERROR_MESSAGES];
+    this->errorMessages = new String[MAX_COUNT_ERROR_MESSAGES];
   }
 
-  if (currentCountErrorMessages < MAX_ERROR_MESSAGES ) {
+  if (currentCountErrorMessages < MAX_COUNT_ERROR_MESSAGES ) {
     errorMessages[currentCountErrorMessages] = errMsg;
     currentCountErrorMessages++;
     result = true;
@@ -27,7 +27,8 @@ bool DeviceState::addErrorMessage(String errMsg) {
 
 bool DeviceState::deleteAllErrorMessages() {
   bool result = false;
-  if (errorMessages != NULL) {
+  if (errorMessages != NULL && currentCountErrorMessages > 0) {
+    Serial.println("Deleting all Error Messages from device state");
     delete[] errorMessages;
     errorMessages = NULL;
     currentCountErrorMessages = 0;

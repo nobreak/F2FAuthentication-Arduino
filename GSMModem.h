@@ -27,8 +27,9 @@ enum EGSMModemState : uint8_t {
 enum EGSMModemError : uint8_t {
   ErrorSerialBusSim800L = 10,
   ErrorNetworkTime,
-  ErrorNetworkConnection,
-  ErrorGSMModem
+  ErrorNetworkConnectionTimeout,
+  ErrorGSMModem, 
+  ErrorSignalStrengthZero
 };
 
 enum EGSMErrorType : uint8_t {

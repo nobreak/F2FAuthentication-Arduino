@@ -57,7 +57,7 @@ void GSMModem::setup() {
         HANDLEERROR(ErrorNetworkTime, Warning, "WARNING: Networktime can not be enabled!" )
       }
     } else {
-      HANDLEERROR(ErrorNetworkConnection, Normal, "GSM Network not reachable, modem is trying to restart..." )
+      HANDLEERROR(ErrorNetworkConnectionTimeout, Normal, "GSM Network not reachable, modem is trying to restart..." )
     }
   } else {
     HANDLEERROR(ErrorGSMModem, Critical, "CRITICAL: GSM modem can not be activated!" )
@@ -209,10 +209,11 @@ int8_t GSMModem::getSignalStrengthDbm() {
   uint8_t rssi = hwSBSIM800L.getRSSI();
   int8_t dbm = -115;
 
-  Serial.print(F("RSSI = ")); Serial.print(rssi); Serial.print(": ");
+  
 
   // based on GSM standard 27007 (https://m10.home.xs4all.nl/mac/downloads/3GPP-27007-630.pdf). page 74
   if (rssi == 0) {
+    HANDLEERROR(ErrorSignalStrengthZero, Warning, "Lost GSM Network connection, signal strength is 0." )
     dbm = -113;
   } else if (rssi == 1) {
     dbm = -111;
@@ -221,6 +222,8 @@ int8_t GSMModem::getSignalStrengthDbm() {
   } else if (rssi = 31) {
     dbm = -51;
   }
+
+  Serial.print(F("GSM MODEM: RSSI = ")); Serial.print(rssi); Serial.print(": ");
   Serial.print(dbm); Serial.println(F(" dBm"));
   return dbm;
 }

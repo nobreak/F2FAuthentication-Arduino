@@ -5,6 +5,7 @@
 // some forward declarations
 void ladln(const String &text, bool toDisplay = true);
 void updateSignalStrengthIfNeeded();
+void sendDeviceStateToSlack(String message);
 //class F2FAEventHandler;
 void resetDevice();
 
@@ -30,10 +31,15 @@ class F2FAEventHandler : public GSMModemDelegate {
 
       gDeviceState->addErrorMessage(errMsg);
 
-      switch (errorType) {
-        case ErrorNetworkConnection:
+      switch (errorCode) {
+        case ErrorNetworkConnectionTimeout:
           // todo: try to restart
           break;
+        case ErrorSignalStrengthZero:
+          // update traffic light
+          // send message to slack
+          sendDeviceStateToSlack("Lost GSM Network connection, signal strength is zero");
+
       }
     }
 
@@ -151,6 +157,7 @@ void sendDeviceStateToSlack(String message) {
   slackMessage += "══════════";
   ladln(slackMessage, false);
   gSlack->sendMessage(slackMessage, false);
+  gDeviceState->deleteAllErrorMessages();
 }
 
 
@@ -178,11 +185,15 @@ void setup() {
     delay(ReadDelay); 
   } else {
     // it's an error, ok, but we still can proceed without display
+    gDeviceState->set(EDeviceState::display, OFF);
   }
   
-  // we want to see that ESP32 is on, so lets switch on the blue MC LED
-  pinMode(LED_BLUE, OUTPUT); 
-  digitalWrite(LED_BLUE, HIGH);
+  
+  #ifdef TTGO_TCALL
+    // we want to see that ESP32 is on, so lets switch on the blue MC LED
+    pinMode(LED_BLUE, OUTPUT); 
+    digitalWrite(LED_BLUE, HIGH);
+  #endif
 
 
   // now lets switch on the SIM800 modem
@@ -209,12 +220,7 @@ void setup() {
   gDisplay->updateIconWifi(ON);
   ladln("Wifi Connected", false);
 
-   
-  #ifdef DEBUG
-    printMenu();
-  #endif
-
-
+  
   // send information to slack that device has startet
   updateSignalStrengthIfNeeded();
   updateCurrentTime();

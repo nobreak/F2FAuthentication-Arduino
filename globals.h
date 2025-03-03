@@ -10,6 +10,7 @@
 #include "Display.h"
 
 #define F2FA_VERSION "v0.1"
+//#define TTGO_TCALL
 
 /**
 * HARDWARE SETUP
