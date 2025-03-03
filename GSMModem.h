@@ -78,17 +78,22 @@ class GSMModem {
     GSMModem(HardwareSerial* hardwareSerialBus, GSMModemInfo modemInfo, GSMModemDelegate* delegate = NULL, char* simPIN = NULL);
 
     void setup();
-    int8_t getCountSMS();
-    bool readSMS(uint8_t messageIndex, char *smsbuff, uint16_t max, uint16_t *readsize);
     bool getTime(char* timeBuffer, uint16_t maxLength);
-    bool deleteSMS(uint8_t messageIndex);
+    
     void reset();
     bool isNetworkConnected();
     SignalStrength getSignalStrength();
     uint8_t getIMEI(char *imei);
-    uint8_t getSMSStorageStatus(); // beta
+    
     uint8_t unlockSIM(char *pin); // beta
     bool getState(EGSMModemState state);
+    
+    // SMS
+    int8_t getCountSMS();
+    bool readSMS(uint8_t messageIndex, char *smsbuff, uint16_t max, uint16_t *readsize);
+    bool deleteSMS(uint8_t messageIndex);
+    String decodeSMSTextIfNeeded(String text) ;
+    uint8_t getSMSStorageStatus(); // beta
 
     void setDelegate(GSMModemDelegate* delegate);
 
@@ -100,6 +105,8 @@ class GSMModem {
     bool isGSMModemOnline();
     void setState(EGSMModemState state, bool value);
     void resetAllStates();
+    String ucs2ToUtf8(String ucs2);
+    bool isUCS2(String message);
 
     HardwareSerial* hardwareSerialBus = NULL;
     GSMModemInfo info;

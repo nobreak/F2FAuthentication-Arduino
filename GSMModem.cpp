@@ -252,6 +252,20 @@ SignalStrength GSMModem::getSignalStrength() {
   return strength;
 }
 
+// returns the length of the IMEI, should be 16
+uint8_t GSMModem::getIMEI(char *imei) {
+  return this->hwSBSIM800L.getIMEI(imei);
+}
+
+bool GSMModem::getTime(char* timeBuffer, uint16_t maxLength) {
+  return this->hwSBSIM800L.getTime(timeBuffer, maxLength);
+}
+
+
+
+/***
+* SMS functions
+**/
 
 int8_t GSMModem::getCountSMS() {
   return this->hwSBSIM800L.getNumSMS();
@@ -261,15 +275,61 @@ bool GSMModem::readSMS(uint8_t messageIndex, char *smsbuff, uint16_t max, uint16
   return this->hwSBSIM800L.readSMS(messageIndex, smsbuff, max, readsize);
 }
 
-bool GSMModem::getTime(char* timeBuffer, uint16_t maxLength) {
-  return this->hwSBSIM800L.getTime(timeBuffer, maxLength);
-}
 
 
 bool GSMModem::deleteSMS(uint8_t messageIndex) {
   return this->hwSBSIM800L.deleteSMS(messageIndex);
 }
 
+
+// check whetther the SMS is just text or in UCS2 format (mostly including emojis)
+bool GSMModem::isUCS2(String message) {
+  // UCS2 messages  are hex (0-9, A-F) and length should be even
+  for (int i = 0; i < message.length(); i++) {
+    char c = message[i];
+    if (!isHexadecimalDigit(c)) {
+      return false; // No UCS2, is not a hex value
+    }
+  }
+  return (message.length() % 4 == 0); // UCS2-signs always are 4 hex digits for each sign
+}
+
+// converts a ucs2 formates sms text into UTF 8
+String GSMModem::ucs2ToUtf8(String ucs2) {
+  String utf8 = "";
+  for (int i = 0; i < ucs2.length(); i += 4) {
+    // read out 2 bytes (16-Bit-Value)
+    String hexChar = ucs2.substring(i, i + 4);
+    int charCode = strtol(hexChar.c_str(), NULL, 16);
+
+    // convert into UTF8 and append
+    if (charCode <= 0x7F) { // 1 Byte (ASCII)
+      utf8 += char(charCode);
+    } else if (charCode <= 0x7FF) { // 2 Bytes
+      utf8 += char(0xC0 | ((charCode >> 6) & 0x1F));
+      utf8 += char(0x80 | (charCode & 0x3F));
+    } else { // 3 Bytes (for Emojis or other special characters)
+      utf8 += char(0xE0 | ((charCode >> 12) & 0x0F));
+      utf8 += char(0x80 | ((charCode >> 6) & 0x3F));
+      utf8 += char(0x80 | (charCode & 0x3F));
+    }
+  }
+  return utf8;
+}
+
+String GSMModem::decodeSMSTextIfNeeded(String text) {
+  // check whether it is a  UCS2-Format 
+  if (isUCS2(text)) {
+    return ucs2ToUtf8(text); // convert UCS2 into readable text
+  } else {
+    return text; // it's just text (ASCII/UTF-8) no change
+  }
+}
+
+
+
+
+// beta
 void GSMModem::reset() {
   digitalWrite(info.pinRST, LOW);
   delay(100);
@@ -277,10 +337,6 @@ void GSMModem::reset() {
   delay(3000); // wait for restart
 }
 
-// returns the length of the IMEI, should be 16
-uint8_t GSMModem::getIMEI(char *imei) {
-  return this->hwSBSIM800L.getIMEI(imei);
-}
 
 // beta
 uint8_t GSMModem::getSMSStorageStatus() {

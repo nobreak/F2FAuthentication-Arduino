@@ -254,6 +254,9 @@ void updateCurrentTime(){
 }
 
 
+
+
+
 void forwardAndDeleteSMSIfNeeded() {
   int8_t countSms = gModem->getCountSMS();
   gDisplay->updateIconMessage(countSms);
@@ -268,7 +271,7 @@ void forwardAndDeleteSMSIfNeeded() {
 
       for ( ; smsn <= countSms; smsn++) {
         Serial.print(F("\n\rReading SMS #")); Serial.println(smsn);
-        if (!gModem->readSMS(smsn, smsTextBuffer, 250, &smslen)) {  // pass in buffer and max len!
+        if (!gModem->readSMS(smsn, smsTextBuffer, 561, &smslen)) {  // pass in buffer and max len!
           Serial.println(F("SMS Read Failed!"));
           break;
         }
@@ -280,13 +283,16 @@ void forwardAndDeleteSMSIfNeeded() {
           continue;
         }
 
+        String decodedUFT8Message = gModem->decodeSMSTextIfNeeded(smsTextBuffer);
+
         Serial.print(F("***** SMS #")); Serial.print(smsn);
         Serial.print(" ("); Serial.print(smslen); Serial.println(F(") bytes *****"));
-        Serial.println(smsTextBuffer);
+        Serial.println(decodedUFT8Message);
         Serial.println(F("*****"));
 
-        String slackMessange = "Received new SMS:\r\n'" + String(smsTextBuffer) + "'"; 
-        if (gSlack->sendMessage(String(slackMessange)) == true ) {
+        String slackMessage = "Received new SMS: '" + String(decodedUFT8Message) + "'"; 
+        //gSlack->sendMessage("Received new SMS:");
+        if (gSlack->sendMessage(slackMessage) == true ) {
           // delete SMS
           Serial.print(F("\n\rDeleting SMS #")); Serial.println(smsn);
           if (gModem->deleteSMS(smsn)) {
