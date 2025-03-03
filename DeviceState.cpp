@@ -70,6 +70,16 @@ String DeviceState::getLastNetworkTime() {
   return mLastNetworkTime;
 }
 
+void DeviceState::setCountNotForwardedSMS(uint8_t count) {
+  mCountNotForwardedSMS = count;
+}
+
+
+uint8_t DeviceState::getCountNotForwardedSMS() {
+  return mCountNotForwardedSMS;
+}
+
+
 
 String DeviceState::escapedTimeString(const String& input) {
   String output;
@@ -117,7 +127,7 @@ String DeviceState::getDescription() {
       case EDeviceState::network:
         result += "GSM Network: ";
         if (get(EDeviceState::network) == ON) {
-          result += "Connected (signal strength: " + String(this->mSignalStrength) + "/" + String(SignalStrength::countSignalStrengths-1) +")";
+          result += "Connected (signal strength: " + String(this->mSignalStrength) + "/" + String(SignalStrength::countSignalStrengths-1) + ", count not forwarded SMS: " + String(this->mCountNotForwardedSMS)+")";
         } else {
           result += "NOT Connected";
         }  

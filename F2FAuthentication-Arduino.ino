@@ -218,6 +218,7 @@ void setup() {
   // send information to slack that device has startet
   updateSignalStrengthIfNeeded();
   updateCurrentTime();
+  gDeviceState->setCountNotForwardedSMS(gModem->getCountSMS());
   sendDeviceStateToSlack("has started with following states:");
 
   // removing all texts from display , before handing over to main loop
@@ -261,6 +262,7 @@ void updateCurrentTime(){
 
 void forwardAndDeleteSMSIfNeeded() {
   int8_t countSms = gModem->getCountSMS();
+  gDeviceState->setCountNotForwardedSMS(countSms);
   gDisplay->updateIconMessage(countSms);
 
   if (countSms > 0) {

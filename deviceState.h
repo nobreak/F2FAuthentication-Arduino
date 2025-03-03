@@ -29,6 +29,8 @@ class DeviceState {
     SignalStrength getSignalStrength();
     void setLastNetworkTime(String networkTime);
     String getLastNetworkTime();
+    void setCountNotForwardedSMS(uint8_t count);
+    uint8_t getCountNotForwardedSMS();
 
 
     String getDescription(); 
@@ -44,6 +46,7 @@ class DeviceState {
     uint8_t currentCountErrorMessages = 0;
     SignalStrength mSignalStrength;
     String mLastNetworkTime;
+    uint8_t mCountNotForwardedSMS = 0; // how much SMS we have on SIM chip which are not forwarded to slack 
 
 };
 
