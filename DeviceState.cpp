@@ -15,15 +15,27 @@ bool DeviceState::addErrorMessage(String errMsg) {
   
   if (errorMessages == NULL) {
     this->errorMessages = new String[MAX_COUNT_ERROR_MESSAGES];
-  }
+  } 
 
-  if (currentCountErrorMessages < MAX_COUNT_ERROR_MESSAGES ) {
-    errorMessages[currentCountErrorMessages] = errMsg;
-    currentCountErrorMessages++;
-    result = true;
+  if (!this->containsErrorMessage(errMsg)) {
+    if (currentCountErrorMessages < MAX_COUNT_ERROR_MESSAGES ) {
+      errorMessages[currentCountErrorMessages] = errMsg;
+      currentCountErrorMessages++;
+      result = true;
+    }
   }
   return result;
 }
+
+bool DeviceState::containsErrorMessage(String value) {
+  for (int i = 0; i < MAX_COUNT_ERROR_MESSAGES; i++) {
+    if (this->errorMessages[i] == value) {
+      return true; // the value already exists
+    }
+  }
+  return false; // te value does not exist
+}
+
 
 bool DeviceState::deleteAllErrorMessages() {
   bool result = false;

@@ -39,6 +39,7 @@ class DeviceState {
 
   private: 
     String escapedTimeString(const String& input);
+    bool containsErrorMessage(String value);
 
 
     byte mDeviceState;
