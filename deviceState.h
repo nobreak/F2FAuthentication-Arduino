@@ -27,16 +27,23 @@ class DeviceState {
     bool get(EDeviceState stateID);
     void setSignalStrength(SignalStrength sgnStrength);
     SignalStrength getSignalStrength();
-  
+    void setLastNetworkTime(String networkTime);
+    String getLastNetworkTime();
+
+
     String getDescription(); 
     bool addErrorMessage(String errMsg);
     bool deleteAllErrorMessages(); 
 
   private: 
+    String escapedTimeString(const String& input);
+
+
     byte mDeviceState;
     String* errorMessages = NULL;
     uint8_t currentCountErrorMessages = 0;
     SignalStrength mSignalStrength;
+    String mLastNetworkTime;
 
 };
 

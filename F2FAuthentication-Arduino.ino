@@ -146,7 +146,7 @@ void lad(int number, bool toDisplay = true) {
 }
 
 void sendDeviceStateToSlack(String message) {
-  String slackMessage = "══════════\\r\\nF2FA Phone " + String(F2FA_VERSION) + " - " + message + "\\r\\n──────────\\r\\n";
+  String slackMessage = "F2FA Phone " + String(F2FA_VERSION) + " - " + message + "\\r\\n──────────\\r\\n";
   slackMessage += gDeviceState->getDescription();
   slackMessage += "══════════";
   ladln(slackMessage, false);
@@ -215,13 +215,13 @@ void setup() {
   #endif
 
 
-  // removing all texts, before handing over to main llop
-  ladln(""); 
-
   // send information to slack that device has startet
   updateSignalStrengthIfNeeded();
+  updateCurrentTime();
   sendDeviceStateToSlack("has started with following states:");
 
+  // removing all texts from display , before handing over to main loop
+  ladln(""); 
 }
 
 
@@ -241,6 +241,8 @@ void updateCurrentTime(){
     char timeBuffer[23];
     gModem->getTime(timeBuffer, 23);  // getting the time via FONA from GSM modem
     Serial.print(F("Time = ")); Serial.println(timeBuffer);
+
+    gDeviceState->setLastNetworkTime(String(timeBuffer));
 
     // if modem is not fully initalized, we're getting not valid date starting at 04/01/01, we ignore this
     const char* searchString = "04/01/01";

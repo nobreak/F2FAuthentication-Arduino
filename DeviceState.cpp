@@ -62,6 +62,27 @@ SignalStrength DeviceState::getSignalStrength() {
   return this->mSignalStrength;
 }
 
+void DeviceState::setLastNetworkTime(String networkTime) {
+  mLastNetworkTime = networkTime;
+}
+
+String DeviceState::getLastNetworkTime() {
+  return mLastNetworkTime;
+}
+
+
+String DeviceState::escapedTimeString(const String& input) {
+  String output;
+  for (unsigned int i = 0; i < input.length(); i++) {
+    char c = input.charAt(i);
+    switch (c) {
+      case '\"': output += "\\\""; break;
+      default: output += c;
+    }
+  }
+  return output;
+}
+
 
 
 void DeviceState::resetAll() {
@@ -105,7 +126,8 @@ String DeviceState::getDescription() {
       case EDeviceState::networkTime:
         result += "GSM Network Time: ";
         if (get(EDeviceState::networkTime) == ON) {
-          result += "Enabled";
+          Serial.println("#" + this->mLastNetworkTime + "#");
+          result += "Enabled (network time: " + this->escapedTimeString(this->mLastNetworkTime) + ")";
         } else {
           result += "NOT Enabled";
         }  
