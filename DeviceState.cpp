@@ -6,6 +6,7 @@
 DeviceState::DeviceState() {
   this->resetAll();
   this->errorMessages = new String[MAX_ERROR_MESSAGES];
+  this->mSignalStrength = SignalStrength::zero;
 }
 
 
@@ -53,6 +54,14 @@ bool DeviceState::get(EDeviceState stateID) {
   return result; 
 }
 
+void DeviceState::setSignalStrength(SignalStrength sgnStrength) {
+  this->mSignalStrength = sgnStrength;
+}
+
+SignalStrength DeviceState::getSignalStrength() {
+  return this->mSignalStrength;
+}
+
 
 
 void DeviceState::resetAll() {
@@ -87,7 +96,7 @@ String DeviceState::getDescription() {
       case EDeviceState::network:
         result += "GSM Network: ";
         if (get(EDeviceState::network) == ON) {
-          result += "Connected";
+          result += "Connected (signal strength: " + String(this->mSignalStrength) + "/" + String(SignalStrength::countSignalStrengths-1) +")";
         } else {
           result += "NOT Connected";
         }  
@@ -123,7 +132,7 @@ String DeviceState::getDescription() {
     } // switch
   } // for loop
 
-  if (errorMessages != NULL) {
+  if (errorMessages != NULL && currentCountErrorMessages > 0) {
     result += "Errors:\\r\\n";
     for (int e = 0; e < currentCountErrorMessages; e++) {
       result += "  - ";
@@ -132,7 +141,9 @@ String DeviceState::getDescription() {
       // add line break
       result += "\\r\\n";
     } // for loop
-  } // errMSg condition
+  } else {
+    result += "Errors: None\\r\\n";
+  }
 
   return result;
 }

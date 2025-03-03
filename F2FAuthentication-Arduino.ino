@@ -80,7 +80,7 @@ F2FAEventHandler gEventHandler; // is receiving status events from different com
 **/
 unsigned long gSignalStrengthPrevMillis = 0;
 const long gSignalStrengthInterval = 10000; 
-SignalStrength gLastSignalStrength = SignalStrength::zero;
+
 
 unsigned long gTimePrevMillis = 0;
 const long gTimeInterval = 5000; // Interval 5 seconds
@@ -143,6 +143,14 @@ void lad(int number, bool toDisplay = true) {
     gDisplay->print(number);
     gDisplay->display();
   }
+}
+
+void sendDeviceStateToSlack(String message) {
+  String slackMessage = "══════════\\r\\nF2FA Phone " + String(F2FA_VERSION) + " - " + message + "\\r\\n──────────\\r\\n";
+  slackMessage += gDeviceState->getDescription();
+  slackMessage += "══════════";
+  ladln(slackMessage, false);
+  gSlack->sendMessage(slackMessage, false);
 }
 
 
@@ -211,12 +219,8 @@ void setup() {
   ladln(""); 
 
   // send information to slack that device has startet
-
-  String slackMessage = "══════════\\r\\nF2FA Phone " + String(F2FA_VERSION) + " has started with following states:\\r\\n──────────\\r\\n";
-  slackMessage += gDeviceState->getDescription();
-  slackMessage += "══════════";
-  ladln(slackMessage, false);
-  gSlack->sendMessage(slackMessage, false);
+  updateSignalStrengthIfNeeded();
+  sendDeviceStateToSlack("has started with following states:");
 
 }
 
@@ -225,10 +229,10 @@ void setup() {
 void updateSignalStrengthIfNeeded(){
   SignalStrength sgnStrngth = gModem->getSignalStrength();
 
-  if (sgnStrngth != gLastSignalStrength) {
+  if (sgnStrngth != gDeviceState->getSignalStrength()) {
     Serial.print(F("New Signal Strength")); Serial.println(sgnStrngth);
     gDisplay->updateIconSignalStrength((F2FADisplay::DisplaySignalStrength)sgnStrngth);
-    gLastSignalStrength = sgnStrngth;
+    gDeviceState->setSignalStrength(sgnStrngth);
   }
 }
 
@@ -306,7 +310,7 @@ void loop() {
 
    unsigned long currentMillis = millis();
 
-  // get the signal strength and update the diplay if it has changed
+  // get the signal strength and update the display if it has changed
   if (currentMillis - gSignalStrengthPrevMillis >= gSignalStrengthInterval) {
     gSignalStrengthPrevMillis = currentMillis;
     updateSignalStrengthIfNeeded();

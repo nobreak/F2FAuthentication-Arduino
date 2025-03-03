@@ -25,7 +25,10 @@ class DeviceState {
     void resetAll();
     void set(EDeviceState stateID, bool value);
     bool get(EDeviceState stateID);
-    String getDescription();
+    void setSignalStrength(SignalStrength sgnStrength);
+    SignalStrength getSignalStrength();
+  
+    String getDescription(); 
     bool addErrorMessage(String errMsg);
     bool deleteAllErrorMessages(); 
 
@@ -33,6 +36,7 @@ class DeviceState {
     byte mDeviceState;
     String* errorMessages = NULL;
     uint8_t currentCountErrorMessages = 0;
+    SignalStrength mSignalStrength;
 
 };
 

@@ -51,7 +51,8 @@ enum SignalStrength {
   poor, 
   fair, 
   good, 
-  excellent 
+  excellent,
+  countSignalStrengths 
 };
 
 struct GSMModemInfo {
