@@ -57,7 +57,7 @@ void GSMModem::setup() {
         HANDLEERROR(ErrorNetworkTime, Warning, "WARNING: Networktime can not be enabled!" )
       }
     } else {
-      HANDLEERROR(ErrorNetworkConnection, Normal, "GSM Network not reachable, device is trying to restart..." )
+      HANDLEERROR(ErrorNetworkConnection, Normal, "GSM Network not reachable, modem is trying to restart..." )
     }
   } else {
     HANDLEERROR(ErrorGSMModem, Critical, "CRITICAL: GSM modem can not be activated!" )
