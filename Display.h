@@ -6,10 +6,6 @@
 #include <Adafruit_SSD1306.h>
 #include <Wire.h>
 
-//#include "globals.h"
-
-
-
 
 #define WHITE SSD1306_WHITE
 #define BLACK SSD1306_BLACK
@@ -33,9 +29,6 @@ class F2FADisplay : public Adafruit_SSD1306 {
     void updateTextWithCurrentTime(char* buffer);
     void updateIconWifi(bool isVisible);
     void updateIconMessage(int8_t countSms);
-
-    
-
 };
 
 

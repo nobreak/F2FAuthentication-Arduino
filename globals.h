@@ -8,6 +8,7 @@
 #include "slack.h"
 #include "deviceState.h"
 #include "Display.h"
+#include "TrafficLight.h"
 
 #define F2FA_VERSION "v0.1"
 //#define TTGO_TCALL

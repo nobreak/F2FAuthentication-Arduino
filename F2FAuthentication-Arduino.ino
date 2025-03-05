@@ -15,6 +15,7 @@ void resetDevice();
 GSMModem* gModem = NULL;  // Serial bus setup for communication to IDE and SIM800L
 DeviceState* gDeviceState = new DeviceState(); // some states about the device
 F2FADisplay* gDisplay = NULL; // our OLED display
+TrafficLight* gTrafficLight = NULL; 
 
 
 class F2FAEventHandler : public GSMModemDelegate {
@@ -232,6 +233,11 @@ void setup() {
 
   // removing all texts from display , before handing over to main loop
   ladln(""); 
+
+  gTrafficLight = new TrafficLight(14, 27, 26);
+  gTrafficLight->switchRedLED();
+  gTrafficLight->switchYellowLED();
+  gTrafficLight->switchGreenLED();
 }
 
 
@@ -333,12 +339,14 @@ void loop() {
   if (currentMillis - gSignalStrengthPrevMillis >= gSignalStrengthInterval) {
     gSignalStrengthPrevMillis = currentMillis;
     updateSignalStrengthIfNeeded();
+    gTrafficLight->switchRedLED();
   }
     
   // get the time and update the display
   if (gDeviceState->get(EDeviceState::networkTime) == ON && (currentMillis - gTimePrevMillis >= gTimeInterval)) {
     gTimePrevMillis = currentMillis;
     updateCurrentTime();
+    gTrafficLight->switchYellowLED();
   }
 
   // get the count of received SMS and forward them
@@ -347,6 +355,7 @@ void loop() {
     gSMSPollPrevMillis = currentMillis;
     // get count of SMS
     forwardAndDeleteSMSIfNeeded();
+    gTrafficLight->switchGreenLED();
   }
 
 
