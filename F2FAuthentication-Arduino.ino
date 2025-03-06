@@ -8,6 +8,15 @@ void updateSignalStrengthIfNeeded();
 void sendDeviceStateToSlack(String message);
 //class F2FAEventHandler;
 void resetDevice();
+void forwardAndDeleteSMSIfNeeded();
+void updateCurrentTime();
+void sendDeviceStateToSlack(String message);
+void updateSignalStrengthIfNeeded();
+// log and display functions
+void ladln(const String &text, bool toDisplay);
+void lad(const String &text, bool toDisplay = true);
+void ladln(int number, bool toDisplay = true);
+void lad(int number, bool toDisplay = true);
 
 /****
 * Necessary objects
@@ -97,7 +106,7 @@ unsigned long gSMSPollPrevMillis = 0;
 const long gSMSPollInterval = 10000; // Interval 10 seconds
 
 unsigned long gSendStatusPrevMillis = 0;
-const long gSendStatusInterval = 600000 * 6; // 10min *6
+const long gSendStatusInterval = 600000 * 6 *6; // 10min *6 * 6 = 6h
 
 
 
@@ -110,65 +119,19 @@ Slack* gSlack = new Slack(SLACK_WEBHOOK_URL);
 
 
 
-void ladln(const String &text, bool toDisplay) {
-
-  Serial.println(text);
-
-  if (toDisplay) {
-    gDisplay->clearRectOnDisplay(0,8,128,32);
-    gDisplay->setCursor(0, 8);
-    gDisplay->println(text);
-    gDisplay->display();
-  }
-}
-
-void lad(const String &text, bool toDisplay = true) {
-  Serial.print(text);
-
-  if (toDisplay) {
-    gDisplay->clearRectOnDisplay(0,8,128,32);
-    gDisplay->setCursor(0, 8);
-    gDisplay->print(text);
-    gDisplay->display();
-  }
-}
-
-void ladln(int number, bool toDisplay = true) {
-  Serial.println(number);
-
-  if (toDisplay) {
-    gDisplay->clearRectOnDisplay(0,8,128,32);
-    gDisplay->setCursor(0, 8);
-    gDisplay->println(number);
-    gDisplay->display();
-  }
-}
-
-void lad(int number, bool toDisplay = true) {
-  Serial.print(number);
-
-  if (toDisplay) {
-    gDisplay->clearRectOnDisplay(0,8,128,32);
-    gDisplay->setCursor(0, 8);
-    gDisplay->print(number);
-    gDisplay->display();
-  }
-}
-
-void sendDeviceStateToSlack(String message) {
-  String slackMessage = "F2FA Phone " + String(F2FA_VERSION) + " - " + message + "\\r\\n──────────\\r\\n";
-  slackMessage += gDeviceState->getDescription();
-  slackMessage += "══════════";
-  ladln(slackMessage, false);
-  gSlack->sendMessage(slackMessage, false);
-  gDeviceState->deleteAllErrorMessages();
-}
 
 
 /****
 * SETUP
 *****/
 void setup() {
+
+  gTrafficLight = new TrafficLight(14, 27, 26);
+  gTrafficLight->redOn();
+  //gTrafficLight->yellowOn();
+  
+  //gTrafficLight->switchYellowLED();
+  //gTrafficLight->switchGreenLED();
 
   // to see waht happens in the IDE we need the serial bus at first
   //Begin serial communication with ESP32 and Arduino IDE (Serial Monitor to log into IDE what happens)
@@ -234,12 +197,71 @@ void setup() {
   // removing all texts from display , before handing over to main loop
   ladln(""); 
 
-  gTrafficLight = new TrafficLight(14, 27, 26);
-  gTrafficLight->switchRedLED();
-  gTrafficLight->switchYellowLED();
-  gTrafficLight->switchGreenLED();
+  
 }
 
+
+
+/**
+* Main Loop
+**/
+void loop() {
+
+  gTrafficLight->loop();
+  gTrafficLight->redBlinking(1000);
+  gTrafficLight->yellowBlinking(500);
+  gTrafficLight->greenBlinking(1500);
+
+   unsigned long currentMillis = millis();
+
+  // get the signal strength and update the display if it has changed
+  if (currentMillis - gSignalStrengthPrevMillis >= gSignalStrengthInterval) {
+    gSignalStrengthPrevMillis = currentMillis;
+    updateSignalStrengthIfNeeded();
+   // gTrafficLight->switchRedLED();
+  }
+    
+  // get the time and update the display
+  if (gDeviceState->get(EDeviceState::networkTime) == ON && (currentMillis - gTimePrevMillis >= gTimeInterval)) {
+    gTimePrevMillis = currentMillis;
+    updateCurrentTime();
+    //gTrafficLight->switchYellowLED();
+  }
+
+  // get the count of received SMS and forward them
+  // after it we delete the SMS
+  if (gDeviceState->get(EDeviceState::network) == ON && currentMillis - gSMSPollPrevMillis >= gSMSPollInterval) {
+    gSMSPollPrevMillis = currentMillis;
+    // get count of SMS
+    forwardAndDeleteSMSIfNeeded();
+   //gTrafficLight->switchGreenLED();
+  }
+
+
+  if (currentMillis - gSendStatusPrevMillis >= gSendStatusInterval) {
+    gSendStatusPrevMillis = currentMillis;
+    sendDeviceStateToSlack("Still alive.");
+  }
+
+
+
+  /*if (gGSMNetworkConnected == false) {
+    ladln("Connecting GSM network ...");
+    if (waitForNetwork(30000)) { // wait upto 60 seconds
+      gGSMNetworkTimeEnabled = true;
+      ladln("GSM Network connected.");
+      updateSignalStrengthIfNeeded();
+    } else {
+      ladln("GSM Network not available.");
+    }
+  }*/
+}
+
+
+void resetDevice() {
+  gModem->reset();
+  ESP.restart();  
+}
 
 
 void updateSignalStrengthIfNeeded(){
@@ -250,6 +272,16 @@ void updateSignalStrengthIfNeeded(){
     gDisplay->updateIconSignalStrength((F2FADisplay::DisplaySignalStrength)sgnStrngth);
     gDeviceState->setSignalStrength(sgnStrngth);
   }
+}
+
+
+void sendDeviceStateToSlack(String message) {
+  String slackMessage = "F2FA Phone " + String(F2FA_VERSION) + " - " + message + "\\r\\n──────────\\r\\n";
+  slackMessage += gDeviceState->getDescription();
+  slackMessage += "──────────";
+  ladln(slackMessage, false);
+  gSlack->sendMessage(slackMessage, false);
+  gDeviceState->deleteAllErrorMessages();
 }
 
 
@@ -264,16 +296,12 @@ void updateCurrentTime(){
     const char* searchString = "04/01/01";
     char* result = strstr(timeBuffer, searchString);
 
-    if (result != NULL) {
+   /* if (result != NULL) {
       Serial.print(F("Time = ")); Serial.print(timeBuffer);  Serial.print(F("++++NOT VALID"));
-    } else {
+    } else {*/
       gDisplay->updateTextWithCurrentTime(timeBuffer);
-    }
+    //}
 }
-
-
-
-
 
 void forwardAndDeleteSMSIfNeeded() {
   int8_t countSms = gModem->getCountSMS();
@@ -309,8 +337,7 @@ void forwardAndDeleteSMSIfNeeded() {
         Serial.println(decodedUFT8Message);
         Serial.println(F("*****"));
 
-        String slackMessage = "Received new SMS: '" + String(decodedUFT8Message) + "'"; 
-        //gSlack->sendMessage("Received new SMS:");
+        String slackMessage = "******* Received new SMS: '" + String(decodedUFT8Message) + "'"; 
         if (gSlack->sendMessage(slackMessage) == true ) {
           // delete SMS
           Serial.print(F("\n\rDeleting SMS #")); Serial.println(smsn);
@@ -328,61 +355,51 @@ void forwardAndDeleteSMSIfNeeded() {
 }
 
 
-/**
-* Main Loop
-**/
-void loop() {
+void ladln(const String &text, bool toDisplay) {
 
-   unsigned long currentMillis = millis();
+  Serial.println(text);
 
-  // get the signal strength and update the display if it has changed
-  if (currentMillis - gSignalStrengthPrevMillis >= gSignalStrengthInterval) {
-    gSignalStrengthPrevMillis = currentMillis;
-    updateSignalStrengthIfNeeded();
-    gTrafficLight->switchRedLED();
+  if (toDisplay) {
+    gDisplay->clearRectOnDisplay(0,8,128,32);
+    gDisplay->setCursor(0, 8);
+    gDisplay->println(text);
+    gDisplay->display();
   }
-    
-  // get the time and update the display
-  if (gDeviceState->get(EDeviceState::networkTime) == ON && (currentMillis - gTimePrevMillis >= gTimeInterval)) {
-    gTimePrevMillis = currentMillis;
-    updateCurrentTime();
-    gTrafficLight->switchYellowLED();
-  }
-
-  // get the count of received SMS and forward them
-  // after it we delete the SMS
-  if (gDeviceState->get(EDeviceState::network) == ON && currentMillis - gSMSPollPrevMillis >= gSMSPollInterval) {
-    gSMSPollPrevMillis = currentMillis;
-    // get count of SMS
-    forwardAndDeleteSMSIfNeeded();
-    gTrafficLight->switchGreenLED();
-  }
-
-
-  if (currentMillis - gSendStatusPrevMillis >= gSendStatusInterval) {
-    gSendStatusPrevMillis = currentMillis;
-    sendDeviceStateToSlack("Still alive.");
-  }
-
-
-
-  /*if (gGSMNetworkConnected == false) {
-    ladln("Connecting GSM network ...");
-    if (waitForNetwork(30000)) { // wait upto 60 seconds
-      gGSMNetworkTimeEnabled = true;
-      ladln("GSM Network connected.");
-      updateSignalStrengthIfNeeded();
-    } else {
-      ladln("GSM Network not available.");
-    }
-  }*/
 }
 
+void lad(const String &text, bool toDisplay) {
+  Serial.print(text);
 
-void resetDevice() {
-  gModem->reset();
-  ESP.restart();  
+  if (toDisplay) {
+    gDisplay->clearRectOnDisplay(0,8,128,32);
+    gDisplay->setCursor(0, 8);
+    gDisplay->print(text);
+    gDisplay->display();
+  }
 }
+
+void ladln(int number, bool toDisplay) {
+  Serial.println(number);
+
+  if (toDisplay) {
+    gDisplay->clearRectOnDisplay(0,8,128,32);
+    gDisplay->setCursor(0, 8);
+    gDisplay->println(number);
+    gDisplay->display();
+  }
+}
+
+void lad(int number, bool toDisplay) {
+  Serial.print(number);
+
+  if (toDisplay) {
+    gDisplay->clearRectOnDisplay(0,8,128,32);
+    gDisplay->setCursor(0, 8);
+    gDisplay->print(number);
+    gDisplay->display();
+  }
+}
+
 
 
 /*********/
