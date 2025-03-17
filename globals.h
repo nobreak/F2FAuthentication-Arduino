@@ -10,7 +10,7 @@
 #include "Display.h"
 #include "TrafficLight.h"
 
-#define F2FA_VERSION "v0.1"
+#define F2FA_VERSION "v0.1.1"
 //#define TTGO_TCALL
 
 /**
