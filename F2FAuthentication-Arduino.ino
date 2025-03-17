@@ -106,7 +106,7 @@ unsigned long gSMSPollPrevMillis = 0;
 const long gSMSPollInterval = 10000; // Interval 10 seconds
 
 unsigned long gSendStatusPrevMillis = 0;
-const long gSendStatusInterval = 600000 * 6 *6; // 10min *6 * 6 = 6h
+const long gSendStatusInterval = 600000 * 6 * 24; // 10min *6 * 6 = 24h
 
 
 
