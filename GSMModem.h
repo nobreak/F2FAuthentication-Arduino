@@ -29,7 +29,8 @@ enum EGSMModemError : uint8_t {
   ErrorNetworkTime,
   ErrorNetworkConnectionTimeout,
   ErrorGSMModem, 
-  ErrorSignalStrengthZero
+  ErrorSignalStrengthZero, 
+  ErrorCouldNotDeleteSMS
 };
 
 enum EGSMErrorType : uint8_t {

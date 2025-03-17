@@ -281,7 +281,12 @@ bool GSMModem::readSMS(uint8_t messageIndex, char *smsbuff, uint16_t max, uint16
 
 
 bool GSMModem::deleteSMS(uint8_t messageIndex) {
-  return this->hwSBSIM800L.deleteSMS(messageIndex);
+  bool result = false;
+  result = this->hwSBSIM800L.deleteSMS(messageIndex);
+  if (result == false) {
+    HANDLEERROR(ErrorCouldNotDeleteSMS, Warning, "Could not delete SMS!" )
+  }
+  return result;
 }
 
 

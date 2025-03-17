@@ -49,7 +49,10 @@ class F2FAEventHandler : public GSMModemDelegate {
           // update traffic light
           // send message to slack
           sendDeviceStateToSlack("Lost GSM Network connection, signal strength is zero");
-
+          break;
+        case ErrorCouldNotDeleteSMS:
+          // todo: change traffic light colors
+          break;
       }
     }
 
@@ -343,11 +346,9 @@ void forwardAndDeleteSMSIfNeeded() {
           Serial.print(F("\n\rDeleting SMS #")); Serial.println(smsn);
           if (gModem->deleteSMS(smsn)) {
             Serial.println(F(" Successful deleted!"));
-          } else {
-            Serial.println(F("Couldn't delete"));
-          }
-        } else {
-          Serial.println(F("ERROR: SMS not deleted because of error during send to Slack"));
+          } 
+        } else {          
+          gDeviceState->addErrorMessage("ERROR: SMS not deleted because of error during send to Slack");
         }
 
       }

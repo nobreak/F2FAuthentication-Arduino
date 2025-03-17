@@ -12,6 +12,8 @@ DeviceState::DeviceState() {
 
 bool DeviceState::addErrorMessage(String errMsg) {
   bool result = false;
+
+  Serial.println(errMsg);
   
   if (errorMessages == NULL) {
     this->errorMessages = new String[MAX_COUNT_ERROR_MESSAGES];
