@@ -20,6 +20,13 @@
 #define SerialIDE Serial0
 
 /**
+* Traffic Light
+**/
+#define TL_RED_LED 14
+#define TL_YELLOW_LED 27
+#define TL_GREEN_LED 26
+
+/**
 * GSM Modem
 **/
 #ifdef TTGO_TCALL

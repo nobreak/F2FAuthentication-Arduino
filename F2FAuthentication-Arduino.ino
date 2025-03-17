@@ -129,13 +129,10 @@ Slack* gSlack = new Slack(SLACK_WEBHOOK_URL);
 *****/
 void setup() {
 
-  gTrafficLight = new TrafficLight(14, 27, 26);
+  gTrafficLight = new TrafficLight(TL_RED_LED, TL_YELLOW_LED, TL_GREEN_LED);
   gTrafficLight->redOn();
-  //gTrafficLight->yellowOn();
   
-  //gTrafficLight->switchYellowLED();
-  //gTrafficLight->switchGreenLED();
-
+  
   // to see waht happens in the IDE we need the serial bus at first
   //Begin serial communication with ESP32 and Arduino IDE (Serial Monitor to log into IDE what happens)
   SerialIDE.begin(115200);
@@ -158,6 +155,7 @@ void setup() {
     gDeviceState->set(EDeviceState::display, OFF);
   }
   
+  gTrafficLight->yellowOn();
   
   #ifdef TTGO_TCALL
     // we want to see that ESP32 is on, so lets switch on the blue MC LED
@@ -177,7 +175,10 @@ void setup() {
   modemInfo.serialBaudrate = BAUDRATE_SMS_CALL;
   gModem = new GSMModem(&Serial1, modemInfo, &gEventHandler, SIM_PIN);
   gModem->setup();
-  
+
+  gTrafficLight->redOff();
+  gTrafficLight->greenOn();
+
   // connecting Wifi
   delay(1000); // when we try to connect WiFi directly after having a GSM network, often we have not enough amps available on USB
   WiFi.begin(ssid, password);
@@ -200,7 +201,7 @@ void setup() {
   // removing all texts from display , before handing over to main loop
   ladln(""); 
 
-  
+  gTrafficLight->yellowOff();
 }
 
 
@@ -211,24 +212,18 @@ void setup() {
 void loop() {
 
   gTrafficLight->loop();
-  gTrafficLight->redBlinking(1000);
-  gTrafficLight->yellowBlinking(500);
-  gTrafficLight->greenBlinking(1500);
-
    unsigned long currentMillis = millis();
 
   // get the signal strength and update the display if it has changed
   if (currentMillis - gSignalStrengthPrevMillis >= gSignalStrengthInterval) {
     gSignalStrengthPrevMillis = currentMillis;
     updateSignalStrengthIfNeeded();
-   // gTrafficLight->switchRedLED();
   }
     
   // get the time and update the display
   if (gDeviceState->get(EDeviceState::networkTime) == ON && (currentMillis - gTimePrevMillis >= gTimeInterval)) {
     gTimePrevMillis = currentMillis;
     updateCurrentTime();
-    //gTrafficLight->switchYellowLED();
   }
 
   // get the count of received SMS and forward them
@@ -237,7 +232,6 @@ void loop() {
     gSMSPollPrevMillis = currentMillis;
     // get count of SMS
     forwardAndDeleteSMSIfNeeded();
-   //gTrafficLight->switchGreenLED();
   }
 
 
@@ -312,6 +306,7 @@ void forwardAndDeleteSMSIfNeeded() {
   gDisplay->updateIconMessage(countSms);
 
   if (countSms > 0) {
+      gTrafficLight->greenBlinking(500);
       Serial.print(F("Found ")); Serial.print(countSms); Serial.println(F(" new SMS's on SIM card!"));
 
       // open each SMS 
@@ -352,6 +347,8 @@ void forwardAndDeleteSMSIfNeeded() {
         }
 
       }
+      gTrafficLight->greenBlinking(0);
+      gTrafficLight->greenOn();
     } 
 }
 
