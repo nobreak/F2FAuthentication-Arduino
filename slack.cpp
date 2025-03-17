@@ -54,11 +54,24 @@ bool Slack::sendMessage(String message, bool shouldEscapeStrings) {
 
 String Slack::escapedString(const String& input) {
   String output;
+
+  // for debugging
+  // for (int i = 0; i < input.length(); i++) {
+  //   char zeichen = input[i];
+  //   Serial.print("Zeichen: ");
+  //   Serial.print(zeichen);
+  //   Serial.print(" (ASCII: ");
+  //   Serial.print((int)zeichen);
+  //   Serial.println(")");
+  // }
+
+
   for (unsigned int i = 0; i < input.length(); i++) {
     char c = input.charAt(i);
     switch (c) {
       case '\\': output += "\\\\"; break;
       case '\"': output += "\\\""; break;
+      case '\r': output += ""; break;  // in english messages from apple is a \r. This results in "Invalid Payload" error from Slack
       //case '\n': output += "\\n"; break;
       //case '\r': output += "\\r"; break;
       //case '\t': output += "\\t"; break;
